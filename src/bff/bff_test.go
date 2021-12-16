@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestBFFEndpoints(t *testing.T){
+func TestHome(t *testing.T){
 	testcases := []struct{
 		name string
 		input int
@@ -18,7 +18,7 @@ func TestBFFEndpoints(t *testing.T){
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			if res, _ := BFFEndpoints(test.input); test.expected != res{
+			if res, _ := Home(test.input); test.expected != res{
 				t.Error("Calculation is not correct!")
 			}
 		})

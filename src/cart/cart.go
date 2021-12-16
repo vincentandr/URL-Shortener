@@ -1,4 +1,4 @@
-package cart
+package main
 
 import (
 	"context"
@@ -37,4 +37,8 @@ func ExampleClient() {
     }
     // Output: key value
     // key2 does not exist
+}
+
+func main() {
+	ExampleClient()
 }
