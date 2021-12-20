@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package paymentpb;
+
+option go_package = "github.com/vincentandr/shopping-microservice/src/payment/paymentpb";
+
+service PaymentService {
+    rpc MakePayment(PaymentRequest) returns (PaymentResponse) {}
+}
+
+message PaymentRequest {
+    string user_id = 1;
+}
+
+message PaymentResponse {
+    bool success = 1;
+}
