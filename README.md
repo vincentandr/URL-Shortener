@@ -1,4 +1,4 @@
-# URL-Shortener
+# shopping-microservice
 
 ## Docker commands
 
