@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package catalogpb;
+
+option go_package = "github.com/vincentandr/shopping-microservice/src/catalog/catalogpb";
+
+service CatalogService{
+    rpc GetProducts(EmptyRequest) returns (GetProductsResponse) {}
+    rpc GetProductsWithName(GetProductsRequest) returns (GetProductsResponse) {}
+}
+
+message EmptyRequest {}
+
+message GetProductsRequest {
+    string name = 1;
+}
+
+message GetProductResponse {
+    int32 product_id = 1;
+    string name = 2;
+    int32 qty = 3;
+}
+
+message GetProductsResponse{
+    repeated GetProductResponse products = 1;
+}

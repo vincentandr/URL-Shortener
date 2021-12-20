@@ -2,35 +2,29 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/vincentandr/shopping-microservice/src/bff/clients"
+	"github.com/vincentandr/shopping-microservice/src/bff/routes"
 )
 
 var port string = ":3000"
 
-type Router struct {
-	*mux.Router
-}
-
-// Router constructor
-func NewRouter() *Router{
-	r := &Router{
-		Router: mux.NewRouter(),
-	}
-	r.routes()
-	return r
-}
-
-func (r *Router) routes() {
-	r.HandleFunc("/", Home).Methods("GET")
-	r.HandleFunc("/getProducts", GetProducts).Methods("GET")
-}
-
 func main() {
 	fmt.Println("Server starting at port " + port)
 
-	r := NewRouter()
+	r := routes.NewRouter()
+
+	err := clients.NewCatalogClient()
+	if err != nil {
+		panic("Cannot create catalog client")
+	}
+	defer func(){
+		if err = clients.DisconnectCatalogClient(); err != nil {
+			log.Fatalln("Could not disconnect catalog client")
+		}
+	}()
 
 	http.ListenAndServe(port, r)
 }
