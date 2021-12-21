@@ -3,23 +3,14 @@ package cartdb
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
+	"strconv"
 
 	"github.com/go-redis/redis/v8"
 )
 
 var (
 	dbConn *redis.Client
-	ctx context.Context = context.Background()
 )
-
-// Fields must have capital letter to be exported and used in another package
-type Product struct {
-	Product_id int
-	Name string
-	Qty int
-}
 
 func NewDb() {
 	dbConn = redis.NewClient(&redis.Options{
@@ -33,51 +24,59 @@ func Disconnect() error{
 	err := dbConn.Close()
 
 	if err != nil {
-		log.Fatalln(err)
+		return fmt.Errorf("failed to disconnect db connection: %v", err)
 	}
 
-	return err
+	return nil
 }
 
-func GetCartItems(userId string) ([]Product, error) {
-	_, err := dbConn.Get(ctx, userId).Result()
+func GetCartItems(ctx context.Context, userId string) (map[string]string, error) {
+	res, err := dbConn.HGetAll(ctx, userId).Result()
 	if err != nil{
-		log.Fatalln(err)
-		return nil, err
+		return nil, fmt.Errorf("failed to get cart items: %v", err)
 	}
 
-	return []Product{}, nil
+	return res, nil
 }
 
-func AddOrUpdateCart(userId string, productId string, newQty int32) ([]Product, error) {
-	err := dbConn.HSet(ctx, userId, productId, newQty).Err()
+func AddOrUpdateCart(ctx context.Context, userId string, productId int, newQty int) (map[string]string, error) {
+    err := dbConn.HSet(ctx, userId, productId, newQty).Err()
     if err != nil {
-        log.Fatalln(err)
+        return nil, fmt.Errorf("cannot set hash cart item to redis: %v", err)
     }
 
-	return []Product{}, nil
+    res, err := GetCartItems(ctx, userId)
+    if err != nil {
+        return nil, err
+    }
+
+	return res, nil
 }
 
-func ExampleClient() {
-    err := dbConn.Set(ctx, "key", "value",  2 * time.Hour).Err()
+func RemoveItemFromCart(ctx context.Context, userId string, productId int) (map[string]string, error) {
+    err := dbConn.HDel(ctx, userId, strconv.Itoa(productId)).Err()
     if err != nil {
-        panic(err)
+        return nil, fmt.Errorf("cannot delete cart item from redis: %v", err)
     }
 
-    val, err := dbConn.Get(ctx, "key").Result()
+    res, err := GetCartItems(ctx, userId)
     if err != nil {
-        panic(err)
+        return nil, err
     }
-    fmt.Println("key", val)
 
-    val2, err := dbConn.Get(ctx, "key2").Result()
-    if err == redis.Nil {
-        fmt.Println("key2 does not exist")
-    } else if err != nil {
-        panic(err)
-    } else {
-        fmt.Println("key2", val2)
+	return res, nil
+}
+
+func RemoveAllCartItems(ctx context.Context, userId string) (map[string]string, error) {
+    err := dbConn.Del(ctx, userId).Err()
+    if err != nil {
+        return nil, fmt.Errorf("cannot delete cart items from redis: %v", err)
     }
-    // Output: key value
-    // key2 does not exist
+
+    res, err := GetCartItems(ctx, userId)
+    if err != nil {
+        return nil, err
+    }
+
+	return res, nil
 }

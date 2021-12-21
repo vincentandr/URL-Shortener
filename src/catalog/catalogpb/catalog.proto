@@ -6,19 +6,35 @@ option go_package = "github.com/vincentandr/shopping-microservice/src/catalog/ca
 
 service CatalogService{
     rpc GetProducts(EmptyRequest) returns (GetProductsResponse) {}
-    rpc GetProductsWithName(GetProductsRequest) returns (GetProductsResponse) {}
+    rpc GetProductsByIds(GetProductsByIdsRequest) returns (GetProductsByIdsResponse) {}
+    rpc GetProductsByName(GetProductsByNameRequest) returns (GetProductsResponse) {}
 }
 
 message EmptyRequest {}
 
-message GetProductsRequest {
+message GetProductsByIdsRequest {
+    repeated int32 product_ids = 1;
+}
+
+message GetProductByIdsResponse {
+    int32 product_id = 1;
+    string name = 2;
+    float price = 3;
+}
+
+message GetProductsByIdsResponse {
+    repeated GetProductByIdsResponse products = 1;
+}
+
+message GetProductsByNameRequest {
     string name = 1;
 }
 
 message GetProductResponse {
     int32 product_id = 1;
     string name = 2;
-    int32 qty = 3;
+    float price = 3;
+    int32 qty = 4;
 }
 
 message GetProductsResponse{

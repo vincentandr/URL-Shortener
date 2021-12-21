@@ -1,20 +1,28 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
-	"log"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/vincentandr/shopping-microservice/src/bff/clients"
 )
 	
 func GetProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := clients.GetProducts()
+	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
+	defer cancel()
+
+	// Call function in catalog_client
+	products, err := clients.GetProducts(ctx)
 	if err != nil {
-		log.Fatalln("Could not get products")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
+	// Return products as json response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err = json.NewEncoder(w).Encode(products); err != nil{
@@ -23,12 +31,16 @@ func GetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetProductsWithName(w http.ResponseWriter, r *http.Request) {
+func GetProductsByName(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
+	defer cancel()
+
 	name := r.URL.Query().Get("name")
 
-	products, err := clients.GetProductsWithName(name)
+	products, err := clients.GetProductsByName(ctx, name)
 	if err != nil {
-		log.Fatalf("Could not get products with name %s", name)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -48,11 +60,15 @@ func Payment(w http.ResponseWriter, r *http.Request) {
 // Cart service
 
 func GetCartItems(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
+	defer cancel()
+
 	args := mux.Vars(r)
 
-	items, err := clients.GetCartItems(args["userId"])
+	items, err := clients.GetCartItems(ctx, args["userId"])
 	if err != nil {
-		log.Fatalln("Could not get cart items")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -63,10 +79,80 @@ func GetCartItems(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AddOrUpdateCart(w http.ResponseWriter, r *http.Request) {
+func AddOrUpdateCartQty(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
+	defer cancel()
 
+	args := mux.Vars(r)
+
+	productId, err := strconv.Atoi(args["productId"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	qty, err := strconv.Atoi(r.URL.Query().Get("qty"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+
+	items, err := clients.AddOrUpdateCartQty(ctx, args["userId"], productId, qty)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(items); err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
-func RemoveAllCart(w http.ResponseWriter, r *http.Request) {
+func RemoveCartItem(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
+	defer cancel()
 
+	args := mux.Vars(r)
+
+	productId, err := strconv.Atoi(args["productId"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	items, err := clients.RemoveCartItem(ctx, args["userId"], productId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(items); err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func RemoveAllCartItems(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
+	defer cancel()
+
+	args := mux.Vars(r)
+
+	items, err := clients.RemoveAllCartItems(ctx, args["userId"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(items); err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

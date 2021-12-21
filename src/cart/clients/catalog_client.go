@@ -1,4 +1,4 @@
-// gRPC Catalog Client in BFF
+// gRPC Catalog Client in cart
 
 package clients
 
@@ -37,21 +37,17 @@ func DisconnectCatalogClient() error{
 		return fmt.Errorf("failed to disconnect from RPC client: %v", err)
 	}
 
-	return nil
+	return err
 }
 
-func GetProducts(ctx context.Context) (*pb.GetProductsResponse , error){
-	products, err := catalogClient.GetProducts(ctx, &pb.EmptyRequest{})
-	if err != nil{
-		return nil, err
+func GetProductsByIds(ctx context.Context, productIds []int) (*pb.GetProductsByIdsResponse , error){
+	var convProductIds []int32
+
+	for _, val := range productIds {
+		convProductIds = append(convProductIds, int32(val))
 	}
 
-	return products, nil
-
-}
-
-func GetProductsByName(ctx context.Context, name string) (*pb.GetProductsResponse , error){
-	products, err := catalogClient.GetProductsByName(ctx, &pb.GetProductsByNameRequest{Name: name})
+	products, err := catalogClient.GetProductsByIds(ctx, &pb.GetProductsByIdsRequest{ProductIds: convProductIds})
 	if err != nil{
 		return nil, err
 	}

@@ -5,23 +5,25 @@ package cartpb;
 option go_package = "github.com/vincentandr/shopping-microservice/src/cart/cartpb";
 
 service CartService {
-    rpc GetCartItems(GetCartItemsRequest) returns (GetCartItemsResponse) {}
-    rpc AddOrUpdateCart(AddOrUpdateCartRequest) returns (AddOrUpdateCartResponse) {}
-    rpc RemoveItemFromCart(RemoveItemFromCartRequest) returns (RemoveItemFromCartResponse) {}
+    rpc GetCartItems(GetCartItemsRequest) returns (ItemsResponse) {}
+    rpc AddOrUpdateCart(AddOrUpdateCartRequest) returns (ItemsResponse) {}
+    rpc RemoveItemFromCart(RemoveItemFromCartRequest) returns (ItemsResponse) {}
+    rpc RemoveAllCartItems(RemoveAllCartItemsRequest) returns (ItemsResponse) {}
 }
 
 message GetCartItemsRequest {
     string user_id = 1;
 }
 
-message GetCartItemResponse{
+message ItemResponse{
     int32 product_id = 1;
     string name = 2;
-    int32 qty = 3;
+    float price = 3;
+    int32 qty = 4;
 }
 
-message GetCartItemsResponse {
-    repeated GetCartItemResponse products = 1;
+message ItemsResponse {
+    repeated ItemResponse products = 1;
 }
 
 message AddOrUpdateCartRequest {
@@ -30,15 +32,11 @@ message AddOrUpdateCartRequest {
     int32 new_qty = 3;
 }
 
-message AddOrUpdateCartResponse {
-    repeated GetCartItemResponse products = 1;
-}
-
 message RemoveItemFromCartRequest {
     string user_id = 1;
     int32 product_id = 2;
 }
 
-message RemoveItemFromCartResponse {
-    repeated GetCartItemResponse products = 1;
+message RemoveAllCartItemsRequest {
+    string user_id = 1;
 }

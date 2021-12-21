@@ -1,7 +1,8 @@
 package catalogdb
 
 import (
-	"log"
+	"context"
+	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -22,36 +23,45 @@ CREATE TABLE products (
 type Product struct {
 	Product_id int
 	Name string
+	Price float32
 	Qty int
 }
 
-func NewDb(){
+type ProductById struct {
+	Product_id int
+	Name string
+	Price float32
+}
+
+func NewDb() error{
 	// User:pass@(addr:port)/database_name
 	db, err := sqlx.Connect("mysql", "root@(127.0.0.1:3306)/product")
 	if err != nil{
-		panic("Failed to establish a database connection")
+		return fmt.Errorf("failed to establish a new database connection: %v", err)
 	}
 
 	dbConn = db
+
+	return nil
 }
 
 func Disconnect() error{
 	err := dbConn.Close()
 	if err != nil{
-		log.Fatalln(err)
+		return fmt.Errorf("failed to disconnect db connection: %v", err)
 	}
 
-	return err
+	return nil
 }
 
 func InitSchema() error{
 	dbConn.MustExec(schema)
 	err := SeedTable()
 	if err != nil {
-		log.Fatalln(err)
+		return fmt.Errorf("create schema error: %v", err)
 	}
 
-	return err
+	return nil
 }
 
 func SeedTable() error{
@@ -61,33 +71,48 @@ func SeedTable() error{
     err := tx.Commit()
 	
 	if err != nil {
-		log.Fatalln(err)
+		return fmt.Errorf("seed table error: %v", err)
 	}
 
-	return err
+	return nil
 }
 
-func GetProducts() ([]Product, error){
+func GetProducts(ctx context.Context) ([]Product, error){
 	products := []Product{}
 
-	err := dbConn.Select(&products, "select * from products")
+	err := dbConn.SelectContext(ctx, &products, "select * from products")
 
 	if err != nil {
-		log.Fatalln("GetProducts Select query failed", err)
-		return nil, err
+		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
 
 	return products, nil
 }
 
-func GetProductsWithName(name string) ([]Product, error){
-	products := []Product{}
+func GetProductsByIds(ctx context.Context, ids []int) ([]ProductById, error){
+	products := []ProductById{}
 
-	err := dbConn.Select(&products, "select * from products where name like ?", "%"+name+"%")
+	query, args, err := sqlx.In("select product_id, name from products where product_id in (?)", ids)
+	if err != nil {
+		return nil, fmt.Errorf("select IN clause error: %v", err)
+	}
+
+	err = dbConn.SelectContext(ctx, &products, dbConn.Rebind(query), args...)
 
 	if err != nil {
-		log.Fatalln("GetProductsWithName Select query failed", err)
-		return nil, err
+		return nil, fmt.Errorf("GetProductsByIds Select query failed: %v", err)
+	}
+
+	return products, nil
+}
+
+func GetProductsByName(ctx context.Context, name string) ([]Product, error){
+	products := []Product{}
+
+	err := dbConn.SelectContext(ctx, &products, "select * from products where name like ?", "%"+name+"%")
+
+	if err != nil {
+		return nil, fmt.Errorf("GetProductsByName Select query failed: %v", err)
 	}
 
 	return products, nil

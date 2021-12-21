@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -68,11 +68,11 @@ func main() {
 	// User:pass@(addr:port)/database_name
 	db, err := NewDb()
     if err != nil {
-        log.Fatalln(err)
+        panic(err)
     }
 
 	err = db.initSchema()
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println("failed to create schema")
 	}
 }

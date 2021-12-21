@@ -4,15 +4,14 @@ package clients
 
 import (
 	"context"
-	"log"
-	"time"
+	"fmt"
 
 	pb "github.com/vincentandr/shopping-microservice/src/cart/cartpb"
 	"google.golang.org/grpc"
 )
 
 const (
-	cartRpcPort = ":50051"
+	cartRpcPort = ":50052"
 )
 
 var (
@@ -23,7 +22,7 @@ var (
 func NewCartClient() error{
 	cartClientConn, err := grpc.Dial("localhost" + cartRpcPort, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		return fmt.Errorf("failed to connect to RPC client: %v", err)
 	}
 
 	cartClient = pb.NewCartServiceClient(cartClientConn)
@@ -35,19 +34,45 @@ func DisconnectCartClient() error{
 	err := cartClientConn.Close()
 
 	if err != nil{
-		log.Fatalln(err)
+		return fmt.Errorf("failed to disconnect from RPC client: %v", err)
 	}
 
 	return err
 }
 
-func GetCartItems(userId string) (*pb.GetCartItemsResponse , error){
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
+func GetCartItems(ctx context.Context, userId string) (*pb.ItemsResponse , error){
 	items, err := cartClient.GetCartItems(ctx, &pb.GetCartItemsRequest{UserId: userId})
 	if err != nil{
-		log.Fatalln(err)
+		return nil, err
+	}
+
+	return items, nil
+
+}
+
+func AddOrUpdateCartQty(ctx context.Context, userId string, productId int, qty int) (*pb.ItemsResponse , error){
+	items, err := cartClient.AddOrUpdateCart(ctx, &pb.AddOrUpdateCartRequest{UserId: userId, ProductId: int32(productId), NewQty: int32(qty)})
+	if err != nil{
+		return nil, err
+	}
+
+	return items, nil
+
+}
+
+func RemoveCartItem(ctx context.Context, userId string, productId int) (*pb.ItemsResponse , error){
+	items, err := cartClient.RemoveItemFromCart(ctx, &pb.RemoveItemFromCartRequest{UserId: userId, ProductId: int32(productId)})
+	if err != nil{
+		return nil, err
+	}
+
+	return items, nil
+
+}
+
+func RemoveAllCartItems(ctx context.Context, userId string) (*pb.ItemsResponse , error){
+	items, err := cartClient.RemoveAllCartItems(ctx, &pb.RemoveAllCartItemsRequest{UserId: userId})
+	if err != nil{
 		return nil, err
 	}
 

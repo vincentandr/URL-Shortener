@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
@@ -19,33 +20,54 @@ type Server struct {
 }
 
 func (s *Server) GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetProductsResponse, error) {
-	products, err := db.GetProducts()
+	products, err := db.GetProducts(ctx)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	var res pb.GetProductsResponse
 
 	for i, _ := range products {
-		product := &pb.GetProductResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Qty: int32(products[i].Qty)}
+		product := &pb.GetProductResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Price: products[i].Price, Qty: int32(products[i].Qty)}
 		res.Products = append(res.Products, product)
 	}
 
 	return &res, nil
 }
 
-func (s *Server) GetProductsWithName(ctx context.Context, in *pb.GetProductsRequest) (*pb.GetProductsResponse, error) {
-	log.Printf("Received: %v", in.GetName())
+func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRequest) (*pb.GetProductsByIdsResponse, error) {
+	ids := make([]int, len(in.ProductIds))
+	i := 0
+	for _, val := range in.ProductIds {
+		ids[i] = int(val)
+		i++
+	}
 
-	products, err := db.GetProductsWithName(in.Name)
+	products, err := db.GetProductsByIds(ctx, ids)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
+	}
+
+	var res pb.GetProductsByIdsResponse
+
+	for i, _ := range products {
+		product := &pb.GetProductByIdsResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Price: products[i].Price,}
+		res.Products = append(res.Products, product)
+	}
+
+	return &res, nil
+}
+
+func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByNameRequest) (*pb.GetProductsResponse, error) {
+	products, err := db.GetProductsByName(ctx, in.Name)
+	if err != nil {
+		return nil, err
 	}
 
 	var res pb.GetProductsResponse
 
 	for i, _ := range products {
-		product := &pb.GetProductResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Qty: int32(products[i].Qty)}
+		product := &pb.GetProductResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Price: products[i].Price, Qty: int32(products[i].Qty)}
 		res.Products = append(res.Products, product)
 	}
 
@@ -54,23 +76,27 @@ func (s *Server) GetProductsWithName(ctx context.Context, in *pb.GetProductsRequ
 
 func main() {
 	// Establish connection to mysql db
-	db.NewDb()
+	err := db.NewDb()
+	if err != nil {
+		panic(err)
+	}
+
 	defer func(){
 		if err := db.Disconnect(); err != nil{
-			log.Fatalln(err)
+			panic(err)
 		}
 	}()
 
 	// Create new schema and table seeds
-	// err := db.InitSchema()
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
+	err = db.InitSchema()
+	if err != nil {
+		fmt.Println("failed to create schema")
+	}
 
 	// gRPC
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Panicf("failed to listen: %v", err)
 	}
 	
 	s := grpc.NewServer()
@@ -78,7 +104,7 @@ func main() {
 
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Panicf("failed to serve: %v", err)
 	}
 
 	

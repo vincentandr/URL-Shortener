@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/vincentandr/shopping-microservice/src/bff/clients"
@@ -18,11 +17,21 @@ func main() {
 
 	err := clients.NewCatalogClient()
 	if err != nil {
-		panic("Cannot create catalog client")
+		panic(err)
 	}
 	defer func(){
 		if err = clients.DisconnectCatalogClient(); err != nil {
-			log.Fatalln("Could not disconnect catalog client")
+			panic(err)
+		}
+	}()
+
+	err = clients.NewCartClient()
+	if err != nil {
+		panic(err)
+	}
+	defer func(){
+		if err = clients.DisconnectCartClient(); err != nil {
+			panic(err)
 		}
 	}()
 
