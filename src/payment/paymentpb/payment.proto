@@ -5,13 +5,30 @@ package paymentpb;
 option go_package = "github.com/vincentandr/shopping-microservice/src/payment/paymentpb";
 
 service PaymentService {
+    rpc PaymentCheckout(CheckoutRequest) returns (CheckoutResponse) {}
     rpc MakePayment(PaymentRequest) returns (PaymentResponse) {}
 }
 
-message PaymentRequest {
+message ItemResponse {
+    int32 product_id = 1;
+    string name = 2;
+    float price = 3;
+    int32 qty = 4;
+}
+
+message CheckoutRequest {
     string user_id = 1;
+    repeated ItemResponse items = 2;
+}
+
+message CheckoutResponse {
+    string order_id = 1;
+}
+
+message PaymentRequest {
+    string order_id = 1;
 }
 
 message PaymentResponse {
-    bool success = 1;
+
 }

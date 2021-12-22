@@ -33,25 +33,23 @@ type ProductById struct {
 	Price float32
 }
 
-func NewDb() error{
+func NewDb(){
 	// User:pass@(addr:port)/database_name
 	db, err := sqlx.Connect("mysql", "root@(127.0.0.1:3306)/product")
 	if err != nil{
-		return fmt.Errorf("failed to establish a new database connection: %v", err)
+		fmt.Print("failed to establish a new database connection: ")
+		panic(err)
 	}
 
 	dbConn = db
 
-	return nil
-}
-
-func Disconnect() error{
-	err := dbConn.Close()
-	if err != nil{
-		return fmt.Errorf("failed to disconnect db connection: %v", err)
-	}
-
-	return nil
+	// Defer close connection
+	defer func(){
+		if err := dbConn.Close(); err != nil{
+			fmt.Print("failed to disconnect db connection: ")
+			panic(err)
+		}
+	}()
 }
 
 func InitSchema() error{

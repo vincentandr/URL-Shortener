@@ -18,16 +18,14 @@ func NewDb() {
         Password: "", // no password set
         DB:       0,  // use default DB
     })
-}
 
-func Disconnect() error{
-	err := dbConn.Close()
-
-	if err != nil {
-		return fmt.Errorf("failed to disconnect db connection: %v", err)
-	}
-
-	return nil
+    // Defer close connection
+    defer func(){
+        if err := dbConn.Close(); err != nil {
+            fmt.Print("failed to disconnect db connection: ")
+            panic(err)
+        }
+    }()
 }
 
 func GetCartItems(ctx context.Context, userId string) (map[string]string, error) {

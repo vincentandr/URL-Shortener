@@ -9,6 +9,15 @@ service CartService {
     rpc AddOrUpdateCart(AddOrUpdateCartRequest) returns (ItemsResponse) {}
     rpc RemoveItemFromCart(RemoveItemFromCartRequest) returns (ItemsResponse) {}
     rpc RemoveAllCartItems(RemoveAllCartItemsRequest) returns (ItemsResponse) {}
+    rpc Checkout(CheckoutRequest) returns (CheckoutResponse) {}
+}
+
+message CheckoutRequest {
+    string user_id = 1;
+}
+
+message CheckoutResponse{
+    string order_id = 1;
 }
 
 message GetCartItemsRequest {

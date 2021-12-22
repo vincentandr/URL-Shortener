@@ -1,78 +1,61 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
+	"net"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
+	db "github.com/vincentandr/shopping-microservice/src/payment/paymentdb"
+	pb "github.com/vincentandr/shopping-microservice/src/payment/paymentpb"
+	"google.golang.org/grpc"
 )
 
+const (
+	port = ":50053"
+)
 
-var schema = `
-CREATE TABLE orders (
-    id int NOT NULL AUTO_INCREMENT,
-    user_id varchar(50),
-	product_id varchar(50),
-    qty int,
-	total double,
-	PRIMARY KEY (id)
-);`
-
-type Order struct {
-	Order_Id int 
-	User_id string 
-	Product_id int
-	Qty int
-	Total float32
+type Server struct {
+	pb.UnimplementedPaymentServiceServer
 }
 
-type mysqldb struct {
-	db *sqlx.DB
-}
-
-func NewDb() (*mysqldb, error) {
-	// User:pass@(addr:port)/database_name
-	db, err := sqlx.Connect("mysql", "root@(127.0.0.1:3306)/product")
-	if err != nil{
+func (s *Server) PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
+	// Change order status to draft
+	orderId, err := db.Checkout(ctx, in.UserId, in.Items)
+	if err != nil {
 		return nil, err
 	}
 
-	return &mysqldb{db}, nil
+	return &pb.CheckoutResponse{OrderId: orderId}, nil
 }
 
-func (m *mysqldb) initSchema() error {
-	m.db.MustExec(schema)
-	err := seedTable(m)
-	
-	return err
-}
+func (s *Server) MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.PaymentResponse, error) {
+	// Change order status to pending
 
-func (m *mysqldb) getAllOrders() ([]Order, error){
-	orders := []Order{}
+	// Check if product catalog has enough qty, if yes then reserve. If not reject
 
-	err := m.db.Select(&orders, "select * from orders")
+	// Fire event to product catalog reducing qty
 
-	return orders, err
-}
+	// Fire event to cart emptying user cart
 
-func seedTable(m *mysqldb) error{
-	tx := m.db.MustBegin()
-	tx.MustExec("INSERT INTO orders (user_id, product_id, qty, total) VALUES (?, ?, ?, ?)", "user1", "1", 15, 4000)
-    tx.MustExec("INSERT INTO orders (user_id, product_id, qty, total) VALUES (?, ?, ?, ?)", "user2", "2", 3, 500)
-    err := tx.Commit()
-
-	return err
+	return &pb.PaymentResponse{}, nil
 }
 
 func main() {
-	// User:pass@(addr:port)/database_name
-	db, err := NewDb()
-    if err != nil {
-        panic(err)
-    }
+	// Create mongodb database
+	db.NewDb()
 
-	err = db.initSchema()
+	// gRPC
+	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		fmt.Println("failed to create schema")
+		log.Panicf("failed to listen: %v", err)
+	}
+	
+	s := grpc.NewServer()
+	pb.RegisterPaymentServiceServer(s, &Server{})
+
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Panicf("failed to serve: %v", err)
 	}
 }

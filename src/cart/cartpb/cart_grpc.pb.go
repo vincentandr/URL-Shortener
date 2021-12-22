@@ -22,6 +22,7 @@ type CartServiceClient interface {
 	AddOrUpdateCart(ctx context.Context, in *AddOrUpdateCartRequest, opts ...grpc.CallOption) (*ItemsResponse, error)
 	RemoveItemFromCart(ctx context.Context, in *RemoveItemFromCartRequest, opts ...grpc.CallOption) (*ItemsResponse, error)
 	RemoveAllCartItems(ctx context.Context, in *RemoveAllCartItemsRequest, opts ...grpc.CallOption) (*ItemsResponse, error)
+	Checkout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error)
 }
 
 type cartServiceClient struct {
@@ -68,6 +69,15 @@ func (c *cartServiceClient) RemoveAllCartItems(ctx context.Context, in *RemoveAl
 	return out, nil
 }
 
+func (c *cartServiceClient) Checkout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error) {
+	out := new(CheckoutResponse)
+	err := c.cc.Invoke(ctx, "/cartpb.CartService/Checkout", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CartServiceServer is the server API for CartService service.
 // All implementations must embed UnimplementedCartServiceServer
 // for forward compatibility
@@ -76,6 +86,7 @@ type CartServiceServer interface {
 	AddOrUpdateCart(context.Context, *AddOrUpdateCartRequest) (*ItemsResponse, error)
 	RemoveItemFromCart(context.Context, *RemoveItemFromCartRequest) (*ItemsResponse, error)
 	RemoveAllCartItems(context.Context, *RemoveAllCartItemsRequest) (*ItemsResponse, error)
+	Checkout(context.Context, *CheckoutRequest) (*CheckoutResponse, error)
 	mustEmbedUnimplementedCartServiceServer()
 }
 
@@ -94,6 +105,9 @@ func (UnimplementedCartServiceServer) RemoveItemFromCart(context.Context, *Remov
 }
 func (UnimplementedCartServiceServer) RemoveAllCartItems(context.Context, *RemoveAllCartItemsRequest) (*ItemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveAllCartItems not implemented")
+}
+func (UnimplementedCartServiceServer) Checkout(context.Context, *CheckoutRequest) (*CheckoutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Checkout not implemented")
 }
 func (UnimplementedCartServiceServer) mustEmbedUnimplementedCartServiceServer() {}
 
@@ -180,6 +194,24 @@ func _CartService_RemoveAllCartItems_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CartService_Checkout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckoutRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CartServiceServer).Checkout(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cartpb.CartService/Checkout",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CartServiceServer).Checkout(ctx, req.(*CheckoutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CartService_ServiceDesc is the grpc.ServiceDesc for CartService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,6 +234,10 @@ var CartService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveAllCartItems",
 			Handler:    _CartService_RemoveAllCartItems_Handler,
+		},
+		{
+			MethodName: "Checkout",
+			Handler:    _CartService_Checkout_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

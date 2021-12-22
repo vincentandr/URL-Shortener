@@ -151,6 +151,22 @@ func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartIte
     return items, nil
 }
 
+func (s *Server) Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
+	// Get user id's cart items
+	res, err := s.GetCartItems(ctx, &pb.GetCartItemsRequest{UserId: in.UserId})
+	if err != nil{
+		return nil, err
+	}
+
+	// RPC call to checkout to create order and return order id
+	response, err := clients.PaymentCheckout(ctx, in.UserId, res)
+	if err != nil{
+		return nil, err
+	}
+
+	return &pb.CheckoutResponse{OrderId: response.OrderId}, nil
+}
+
 func convIdsStrToInt(hm map[string]string) ([]int, error) {
 	ids := make([]int, len(hm))
 	i := 0
@@ -187,11 +203,6 @@ func appendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map
 func main() {
     // Init Redis Db
 	db.NewDb()
-    defer func(){
-        if err := db.Disconnect(); err != nil{
-            panic(err)
-        }
-    }()
     
     // gRPC
 	err := clients.NewCatalogClient()

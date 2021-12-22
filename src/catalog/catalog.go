@@ -76,19 +76,10 @@ func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByName
 
 func main() {
 	// Establish connection to mysql db
-	err := db.NewDb()
-	if err != nil {
-		panic(err)
-	}
-
-	defer func(){
-		if err := db.Disconnect(); err != nil{
-			panic(err)
-		}
-	}()
+	db.NewDb()
 
 	// Create new schema and table seeds
-	err = db.InitSchema()
+	err := db.InitSchema()
 	if err != nil {
 		fmt.Println("failed to create schema")
 	}
