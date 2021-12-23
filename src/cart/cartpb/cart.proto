@@ -25,7 +25,7 @@ message GetCartItemsRequest {
 }
 
 message ItemResponse{
-    int32 product_id = 1;
+    string product_id = 1;
     string name = 2;
     float price = 3;
     int32 qty = 4;
@@ -37,13 +37,13 @@ message ItemsResponse {
 
 message AddOrUpdateCartRequest {
     string user_id = 1;
-    int32 product_id = 2;
+    string product_id = 2;
     int32 new_qty = 3;
 }
 
 message RemoveItemFromCartRequest {
     string user_id = 1;
-    int32 product_id = 2;
+    string product_id = 2;
 }
 
 message RemoveAllCartItemsRequest {

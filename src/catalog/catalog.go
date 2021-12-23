@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	db "github.com/vincentandr/shopping-microservice/src/catalog/catalogdb"
 	pb "github.com/vincentandr/shopping-microservice/src/catalog/catalogpb"
+	"github.com/vincentandr/shopping-microservice/src/catalog/model"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc"
 )
 
@@ -20,69 +23,104 @@ type Server struct {
 }
 
 func (s *Server) GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetProductsResponse, error) {
-	products, err := db.GetProducts(ctx)
+	cursor, err := db.GetProducts(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var res pb.GetProductsResponse
+	var products pb.GetProductsResponse
 
-	for i, _ := range products {
-		product := &pb.GetProductResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Price: products[i].Price, Qty: int32(products[i].Qty)}
-		res.Products = append(res.Products, product)
+	// Must have capital letter and bson tag to be able to decode properly
+	res := model.Product{}
+
+	for cursor.Next(ctx) {
+		// Convert document to above struct
+		err := cursor.Decode(&res)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode document: %v", err)
+		}
+
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty)}
+
+		products.Products = append(products.Products, product)
 	}
 
-	return &res, nil
+	return &products, nil
 }
 
 func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRequest) (*pb.GetProductsByIdsResponse, error) {
-	ids := make([]int, len(in.ProductIds))
-	i := 0
-	for _, val := range in.ProductIds {
-		ids[i] = int(val)
-		i++
+	// Convert string to ObjectID for collection filter
+	productIds := make([]primitive.ObjectID, len(in.ProductIds))
+
+	for i, id := range in.ProductIds {
+		objectId, err := primitive.ObjectIDFromHex(id)
+		if err != nil{
+			return nil, fmt.Errorf("failed to convert from hex to object ID: %v", err)
+		}
+
+		productIds[i] = objectId
 	}
 
-	products, err := db.GetProductsByIds(ctx, ids)
+	cursor, err := db.GetProductsByIds(ctx, productIds)
 	if err != nil {
 		return nil, err
 	}
 
-	var res pb.GetProductsByIdsResponse
+	var products pb.GetProductsByIdsResponse
 
-	for i, _ := range products {
-		product := &pb.GetProductByIdsResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Price: products[i].Price,}
-		res.Products = append(res.Products, product)
+	// Must have capital letter and bson tag to be able to decode properly
+	res := model.Product{}
+
+	for cursor.Next(ctx) {
+		// Convert document to above struct
+		err := cursor.Decode(&res)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode document: %v", err)
+		}
+
+		product := &pb.GetProductByIdsResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price}
+
+		products.Products = append(products.Products, product)
 	}
 
-	return &res, nil
+
+	return &products, nil
 }
 
 func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByNameRequest) (*pb.GetProductsResponse, error) {
-	products, err := db.GetProductsByName(ctx, in.Name)
+	cursor, err := db.GetProductsByName(ctx, in.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	var res pb.GetProductsResponse
+	var products pb.GetProductsResponse
 
-	for i, _ := range products {
-		product := &pb.GetProductResponse{ProductId: int32(products[i].Product_id), Name: products[i].Name, Price: products[i].Price, Qty: int32(products[i].Qty)}
-		res.Products = append(res.Products, product)
+	// Must have capital letter and bson tag to be able to decode properly
+	res := model.Product{}
+
+	for cursor.Next(ctx) {
+		// Convert document to above struct
+		err := cursor.Decode(&res)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode document: %v", err)
+		}
+
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty)}
+
+		products.Products = append(products.Products, product)
 	}
 
-	return &res, nil
+
+	return &products, nil
 }
 
 func main() {
 	// Establish connection to mysql db
-	db.NewDb()
+	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
-	// Create new schema and table seeds
-	err := db.InitSchema()
-	if err != nil {
-		fmt.Println("failed to create schema")
-	}
+	db.NewDb(ctx)
+	defer db.Disconnect(ctx)
 
 	// gRPC
 	lis, err := net.Listen("tcp", port)

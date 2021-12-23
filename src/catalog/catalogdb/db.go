@@ -4,114 +4,120 @@ import (
 	"context"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
-	dbConn *sqlx.DB
-	schema string = `
-CREATE TABLE products (
-    product_id int NOT NULL AUTO_INCREMENT,
-    name varchar(50),
-    qty int,
-	PRIMARY KEY (product_id)
-);`
+	dbConn *mongo.Client
+	catalogDb *mongo.Database
+	catalogCollection *mongo.Collection
 )
 
-// Fields must have capital letter to be exported and used in another package 
-type Product struct {
-	Product_id int
-	Name string
-	Price float32
-	Qty int
-}
-
-type ProductById struct {
-	Product_id int
-	Name string
-	Price float32
-}
-
-func NewDb(){
+func NewDb(ctx context.Context){
 	// User:pass@(addr:port)/database_name
-	db, err := sqlx.Connect("mysql", "root@(127.0.0.1:3306)/product")
+	conn, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil{
-		fmt.Print("failed to establish a new database connection: ")
+		fmt.Print("failed to establish a new database connection")
 		panic(err)
 	}
 
-	dbConn = db
-
-	// Defer close connection
-	defer func(){
-		if err := dbConn.Close(); err != nil{
-			fmt.Print("failed to disconnect db connection: ")
-			panic(err)
-		}
-	}()
-}
-
-func InitSchema() error{
-	dbConn.MustExec(schema)
-	err := SeedTable()
-	if err != nil {
-		return fmt.Errorf("create schema error: %v", err)
-	}
-
-	return nil
-}
-
-func SeedTable() error{
-	tx := dbConn.MustBegin()
-	tx.MustExec("INSERT INTO products (name, qty) VALUES (?, ?)", "laptop", 15)
-    tx.MustExec("INSERT INTO products (name, qty) VALUES (?, ?)", "computer", 3)
-    err := tx.Commit()
+	dbConn = conn
 	
+	// Create database
+	catalogDb = dbConn.Database("catalog")
+	catalogCollection = catalogDb.Collection("catalog")
+
+	// Create index
+	_, err = catalogCollection.Indexes().CreateOne(
+        ctx,
+        mongo.IndexModel{
+                Keys: bson.D{{
+                        Key:"name", Value: "text",
+                }},
+        },
+	)
 	if err != nil {
-		return fmt.Errorf("seed table error: %v", err)
+		fmt.Println("failed to create index")
 	}
 
+	// Seed collection
+	if err = SeedCollection(ctx); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func SeedCollection(ctx context.Context) error {
+	count, err := catalogCollection.CountDocuments(ctx, bson.D{})
+	if err == nil && count == 0 {
+		docs := []interface{}{
+			bson.D{
+				{Key:"name", Value: "laptop"},
+				{Key:"price", Value: 600},
+				{Key:"qty", Value: 14},
+			},
+			bson.D{
+				{Key:"name", Value: "computer"},
+				{Key:"price", Value: 800},
+				{Key:"qty", Value: 32},
+			},
+		}
+
+		_, err = catalogCollection.InsertMany(ctx, docs)
+		if err != nil{
+			return fmt.Errorf("failed to seed documents: %v", err)
+		}
+	} else if err != nil{
+		return fmt.Errorf("failed to count documents: %v", err)
+	}
 	return nil
 }
 
-func GetProducts(ctx context.Context) ([]Product, error){
-	products := []Product{}
+func Disconnect(ctx context.Context) {
+	// Defer close connection
+	if err := dbConn.Disconnect(ctx); err != nil{
+		fmt.Print("failed to disconnect db connection: ")
+		panic(err)
+	}
+}
 
-	err := dbConn.SelectContext(ctx, &products, "select * from products")
-
+func GetProducts(ctx context.Context) (*mongo.Cursor, error){
+	cursor, err := catalogCollection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
 
-	return products, nil
+	return cursor, nil
 }
 
-func GetProductsByIds(ctx context.Context, ids []int) ([]ProductById, error){
-	products := []ProductById{}
-
-	query, args, err := sqlx.In("select product_id, name from products where product_id in (?)", ids)
-	if err != nil {
-		return nil, fmt.Errorf("select IN clause error: %v", err)
+func GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cursor, error){
+	// Set what fields to get / select
+	projection := bson.D{
+		{Key:"_id", Value: 1},
+		{Key:"name", Value: 1},
+		{Key:"price", Value: 1},
 	}
 
-	err = dbConn.SelectContext(ctx, &products, dbConn.Rebind(query), args...)
-
+	cursor, err := catalogCollection.Find(
+		ctx, 
+		bson.M{"_id": bson.M{"$in": ids}},
+		options.Find().SetProjection(projection),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("GetProductsByIds Select query failed: %v", err)
+		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
 
-	return products, nil
+	return cursor, nil
 }
 
-func GetProductsByName(ctx context.Context, name string) ([]Product, error){
-	products := []Product{}
-
-	err := dbConn.SelectContext(ctx, &products, "select * from products where name like ?", "%"+name+"%")
-
+func GetProductsByName(ctx context.Context, name string) (*mongo.Cursor, error){
+	// equal to LIKE %name%
+	cursor, err := catalogCollection.Find(ctx, bson.M{"name": primitive.Regex{Pattern: name, Options: ""}})
 	if err != nil {
-		return nil, fmt.Errorf("GetProductsByName Select query failed: %v", err)
+		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
 
-	return products, nil
+	return cursor, nil
 }

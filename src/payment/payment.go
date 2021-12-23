@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 	"net"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	db "github.com/vincentandr/shopping-microservice/src/payment/paymentdb"
 	pb "github.com/vincentandr/shopping-microservice/src/payment/paymentpb"
 	"google.golang.org/grpc"
@@ -43,7 +43,11 @@ func (s *Server) MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.Pa
 
 func main() {
 	// Create mongodb database
-	db.NewDb()
+	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
+
+	db.NewDb(ctx)
+	defer db.Disconnect(ctx)
 
 	// gRPC
 	lis, err := net.Listen("tcp", port)

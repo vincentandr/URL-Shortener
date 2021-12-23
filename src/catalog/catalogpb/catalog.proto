@@ -13,11 +13,11 @@ service CatalogService{
 message EmptyRequest {}
 
 message GetProductsByIdsRequest {
-    repeated int32 product_ids = 1;
+    repeated string product_ids = 1;
 }
 
 message GetProductByIdsResponse {
-    int32 product_id = 1;
+    string product_id = 1;
     string name = 2;
     float price = 3;
 }
@@ -31,7 +31,7 @@ message GetProductsByNameRequest {
 }
 
 message GetProductResponse {
-    int32 product_id = 1;
+    string product_id = 1;
     string name = 2;
     float price = 3;
     int32 qty = 4;

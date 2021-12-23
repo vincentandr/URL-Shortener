@@ -20,7 +20,7 @@ var (
 	paymentClient pb.PaymentServiceClient
 )
 
-func NewpaymentClient() error{
+func NewPaymentClient() error{
 	paymentClientConn, err := grpc.Dial("localhost" + paymentRpcPort, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return fmt.Errorf("failed to connect to RPC client: %v", err)
@@ -31,7 +31,7 @@ func NewpaymentClient() error{
 	return nil
 }
 
-func DisconnectpaymentClient() error{
+func DisconnectPaymentClient() error{
 	err := paymentClientConn.Close()
 
 	if err != nil{

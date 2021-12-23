@@ -2,7 +2,9 @@ package routes
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/vincentandr/shopping-microservice/src/bff/handlers"
+	carthandlers "github.com/vincentandr/shopping-microservice/src/bff/handlers/cart"
+	cataloghandlers "github.com/vincentandr/shopping-microservice/src/bff/handlers/catalog"
+	paymenthandlers "github.com/vincentandr/shopping-microservice/src/bff/handlers/payment"
 )
 
 type Router struct {
@@ -19,11 +21,17 @@ func NewRouter() *Router{
 }
 
 func (r *Router) routes() {
-	r.HandleFunc("/", handlers.GetProducts).Methods("GET")
-	r.HandleFunc("/search", handlers.GetProductsByName).Methods("GET")
-	r.HandleFunc("/viewCart/{userId}", handlers.GetCartItems).Methods("GET")
-	r.HandleFunc("/addOrUpdateCartQty/{userId}/{productId}", handlers.AddOrUpdateCartQty).Methods("PUT")
-	r.HandleFunc("/removeCartItem/{userId}/{productId}", handlers.RemoveCartItem).Methods("DELETE")
-	r.HandleFunc("/removeAllCartItems/{userId}", handlers.RemoveAllCartItems).Methods("DELETE")
-	r.HandleFunc("/pay", handlers.Payment).Methods("POST")
+	// Product catalog
+	r.HandleFunc("/products", cataloghandlers.GetProducts).Methods("GET")
+	r.HandleFunc("/products/search", cataloghandlers.GetProductsByName).Methods("GET")
+
+	// Cart
+	r.HandleFunc("/cart/{userId}", carthandlers.GetCartItems).Methods("GET")
+	r.HandleFunc("/cart/{userId}/{productId}", carthandlers.AddOrUpdateCartQty).Methods("PUT")
+	r.HandleFunc("/cart/{userId}/{productId}", carthandlers.RemoveCartItem).Methods("DELETE")
+	r.HandleFunc("/cart/{userId}", carthandlers.RemoveAllCartItems).Methods("DELETE")
+	r.HandleFunc("/cart/checkout/{userId}", carthandlers.Checkout).Methods("GET")
+
+	// Payment
+	r.HandleFunc("/payment/{orderId}", paymenthandlers.MakePayment).Methods("POST")
 }

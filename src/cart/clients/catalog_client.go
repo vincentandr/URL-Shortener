@@ -40,14 +40,8 @@ func DisconnectCatalogClient() error{
 	return err
 }
 
-func GetProductsByIds(ctx context.Context, productIds []int) (*pb.GetProductsByIdsResponse , error){
-	var convProductIds []int32
-
-	for _, val := range productIds {
-		convProductIds = append(convProductIds, int32(val))
-	}
-
-	products, err := catalogClient.GetProductsByIds(ctx, &pb.GetProductsByIdsRequest{ProductIds: convProductIds})
+func GetProductsByIds(ctx context.Context, productIds []string) (*pb.GetProductsByIdsResponse , error){
+	products, err := catalogClient.GetProductsByIds(ctx, &pb.GetProductsByIdsRequest{ProductIds: productIds})
 	if err != nil{
 		return nil, err
 	}

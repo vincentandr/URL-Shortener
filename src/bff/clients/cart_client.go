@@ -50,8 +50,8 @@ func GetCartItems(ctx context.Context, userId string) (*pb.ItemsResponse , error
 
 }
 
-func AddOrUpdateCartQty(ctx context.Context, userId string, productId int, qty int) (*pb.ItemsResponse , error){
-	items, err := cartClient.AddOrUpdateCart(ctx, &pb.AddOrUpdateCartRequest{UserId: userId, ProductId: int32(productId), NewQty: int32(qty)})
+func AddOrUpdateCartQty(ctx context.Context, userId string, productId string, qty int) (*pb.ItemsResponse , error){
+	items, err := cartClient.AddOrUpdateCart(ctx, &pb.AddOrUpdateCartRequest{UserId: userId, ProductId: productId, NewQty: int32(qty)})
 	if err != nil{
 		return nil, err
 	}
@@ -60,8 +60,8 @@ func AddOrUpdateCartQty(ctx context.Context, userId string, productId int, qty i
 
 }
 
-func RemoveCartItem(ctx context.Context, userId string, productId int) (*pb.ItemsResponse , error){
-	items, err := cartClient.RemoveItemFromCart(ctx, &pb.RemoveItemFromCartRequest{UserId: userId, ProductId: int32(productId)})
+func RemoveCartItem(ctx context.Context, userId string, productId string) (*pb.ItemsResponse , error){
+	items, err := cartClient.RemoveItemFromCart(ctx, &pb.RemoveItemFromCartRequest{UserId: userId, ProductId: productId})
 	if err != nil{
 		return nil, err
 	}
@@ -78,4 +78,13 @@ func RemoveAllCartItems(ctx context.Context, userId string) (*pb.ItemsResponse ,
 
 	return items, nil
 
+}
+
+func Checkout(ctx context.Context, userId string) (*pb.CheckoutResponse , error){
+	res, err := cartClient.Checkout(ctx, &pb.CheckoutRequest{UserId: userId})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

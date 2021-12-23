@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentServiceClient interface {
+	GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error)
 	PaymentCheckout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error)
 	MakePayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
 }
@@ -28,6 +29,15 @@ type paymentServiceClient struct {
 
 func NewPaymentServiceClient(cc grpc.ClientConnInterface) PaymentServiceClient {
 	return &paymentServiceClient{cc}
+}
+
+func (c *paymentServiceClient) GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error) {
+	out := new(GetOrdersResponse)
+	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/GetOrders", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *paymentServiceClient) PaymentCheckout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error) {
@@ -52,6 +62,7 @@ func (c *paymentServiceClient) MakePayment(ctx context.Context, in *PaymentReque
 // All implementations must embed UnimplementedPaymentServiceServer
 // for forward compatibility
 type PaymentServiceServer interface {
+	GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error)
 	PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error)
 	MakePayment(context.Context, *PaymentRequest) (*PaymentResponse, error)
 	mustEmbedUnimplementedPaymentServiceServer()
@@ -61,6 +72,9 @@ type PaymentServiceServer interface {
 type UnimplementedPaymentServiceServer struct {
 }
 
+func (UnimplementedPaymentServiceServer) GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrders not implemented")
+}
 func (UnimplementedPaymentServiceServer) PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PaymentCheckout not implemented")
 }
@@ -78,6 +92,24 @@ type UnsafePaymentServiceServer interface {
 
 func RegisterPaymentServiceServer(s grpc.ServiceRegistrar, srv PaymentServiceServer) {
 	s.RegisterService(&PaymentService_ServiceDesc, srv)
+}
+
+func _PaymentService_GetOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrdersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).GetOrders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/paymentpb.PaymentService/GetOrders",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).GetOrders(ctx, req.(*GetOrdersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _PaymentService_PaymentCheckout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -123,6 +155,10 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "paymentpb.PaymentService",
 	HandlerType: (*PaymentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetOrders",
+			Handler:    _PaymentService_GetOrders_Handler,
+		},
 		{
 			MethodName: "PaymentCheckout",
 			Handler:    _PaymentService_PaymentCheckout_Handler,

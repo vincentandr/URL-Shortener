@@ -3,7 +3,6 @@ package cartdb
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -18,14 +17,14 @@ func NewDb() {
         Password: "", // no password set
         DB:       0,  // use default DB
     })
+}
 
+func Disconnect() {
     // Defer close connection
-    defer func(){
-        if err := dbConn.Close(); err != nil {
-            fmt.Print("failed to disconnect db connection: ")
-            panic(err)
-        }
-    }()
+    if err := dbConn.Close(); err != nil {
+        fmt.Print("failed to disconnect db connection: ")
+        panic(err)
+    }
 }
 
 func GetCartItems(ctx context.Context, userId string) (map[string]string, error) {
@@ -37,7 +36,7 @@ func GetCartItems(ctx context.Context, userId string) (map[string]string, error)
 	return res, nil
 }
 
-func AddOrUpdateCart(ctx context.Context, userId string, productId int, newQty int) (map[string]string, error) {
+func AddOrUpdateCart(ctx context.Context, userId string, productId string, newQty int) (map[string]string, error) {
     err := dbConn.HSet(ctx, userId, productId, newQty).Err()
     if err != nil {
         return nil, fmt.Errorf("cannot set hash cart item to redis: %v", err)
@@ -51,8 +50,8 @@ func AddOrUpdateCart(ctx context.Context, userId string, productId int, newQty i
 	return res, nil
 }
 
-func RemoveItemFromCart(ctx context.Context, userId string, productId int) (map[string]string, error) {
-    err := dbConn.HDel(ctx, userId, strconv.Itoa(productId)).Err()
+func RemoveItemFromCart(ctx context.Context, userId string, productId string) (map[string]string, error) {
+    err := dbConn.HDel(ctx, userId, productId).Err()
     if err != nil {
         return nil, fmt.Errorf("cannot delete cart item from redis: %v", err)
     }

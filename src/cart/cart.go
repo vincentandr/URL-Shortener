@@ -34,8 +34,8 @@ func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (
 		return &pb.ItemsResponse{}, nil
 	}
 
-	// Convert product ids in cart to int
-	ids, err := convIdsStrToInt(res)
+	// Get Product ID Keys from map
+	ids, err := GetMapKeys(res)
 	if err != nil{
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (
 	}
 
 	// Return response in format product id, product name, and qty in cart
-	items, err := appendItemToResponse(products, res)
+	items, err := AppendItemToResponse(products, res)
 	if err != nil{
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (
 }
 
 func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequest) (*pb.ItemsResponse, error) {
-	res, err := db.AddOrUpdateCart(ctx, in.UserId, int(in.ProductId), int(in.NewQty))
+	res, err := db.AddOrUpdateCart(ctx, in.UserId, in.ProductId, int(in.NewQty))
 	if err != nil{
 		return nil, err
 	}
@@ -66,8 +66,8 @@ func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequ
 		return &pb.ItemsResponse{}, nil
 	}
 
-	// Convert product ids in cart to int
-	ids, err := convIdsStrToInt(res)
+	// Get Product ID Keys from map
+	ids, err := GetMapKeys(res)
 	if err != nil{
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequ
 	}
 
 	// Return response in format product id, product name, and qty in cart
-	items, err := appendItemToResponse(products, res)
+	items, err := AppendItemToResponse(products, res)
 	if err != nil{
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequ
 }
 
 func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCartRequest) (*pb.ItemsResponse, error) {
-	res, err := db.RemoveItemFromCart(ctx, in.UserId, int(in.ProductId))
+	res, err := db.RemoveItemFromCart(ctx, in.UserId, in.ProductId)
 	if err != nil{
 		return nil, err
 	}
@@ -98,8 +98,8 @@ func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCa
 		return &pb.ItemsResponse{}, nil
 	}
 
-    // Convert product ids in cart to int
-	ids, err := convIdsStrToInt(res)
+    // Get Product ID Keys from map
+	ids, err := GetMapKeys(res)
 	if err != nil{
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCa
 	}
 
 	// Return response in format product id, product name, and qty in cart
-	items, err := appendItemToResponse(products, res)
+	items, err := AppendItemToResponse(products, res)
 	if err != nil{
 		return nil, err
 	}
@@ -130,8 +130,8 @@ func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartIte
 		return &pb.ItemsResponse{}, nil
 	}
 
-    // Convert product ids in cart to int
-	ids, err := convIdsStrToInt(res)
+    // Get Product ID Keys from map
+	ids, err := GetMapKeys(res)
 	if err != nil{
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartIte
 	}
 
 	// Return response in format product id, product name, and qty in cart
-	items, err := appendItemToResponse(products, res)
+	items, err := AppendItemToResponse(products, res)
 	if err != nil{
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (s *Server) Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.Chec
 		return nil, err
 	}
 
-	// RPC call to checkout to create order and return order id
+	// RPC call to payment checkout to create order and return order id
 	response, err := clients.PaymentCheckout(ctx, in.UserId, res)
 	if err != nil{
 		return nil, err
@@ -167,30 +167,24 @@ func (s *Server) Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.Chec
 	return &pb.CheckoutResponse{OrderId: response.OrderId}, nil
 }
 
-func convIdsStrToInt(hm map[string]string) ([]int, error) {
-	ids := make([]int, len(hm))
+func GetMapKeys(hm map[string]string) ([]string, error) {
+	ids := make([]string, len(hm))
 	i := 0
-	for k, _ := range hm {
-		val, err := strconv.Atoi(k)
-		if err != nil{
-			return nil, fmt.Errorf("failed to convert id from string to int: %v", err)
-		}
-
-		ids[i] = val
+	for k := range hm {
+		ids[i] = k
 		i++
 	}
 
 	return ids, nil
 }
 
-func appendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map[string]string) (*pb.ItemsResponse, error){
+func AppendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map[string]string) (*pb.ItemsResponse, error){
 	var items pb.ItemsResponse
 
 	for _, prod := range catalogRes.Products {
-		strProdId := strconv.Itoa(int(prod.ProductId))
-		qty, err := strconv.Atoi(hm[strProdId])
+		qty, err := strconv.Atoi(hm[prod.ProductId])
 		if err != nil{
-			return nil, fmt.Errorf("failed to convert id from string to int: %v", err)
+			return nil, fmt.Errorf("failed to convert qty from string to int: %v", err)
 		}
 
 		item := &pb.ItemResponse{ProductId: prod.ProductId, Name: prod.Name, Price: prod.Price, Qty: int32(qty)}
@@ -203,6 +197,7 @@ func appendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map
 func main() {
     // Init Redis Db
 	db.NewDb()
+	defer db.Disconnect()
     
     // gRPC
 	err := clients.NewCatalogClient()
@@ -211,6 +206,16 @@ func main() {
 	}
 	defer func(){
 		if err = clients.DisconnectCatalogClient(); err != nil {
+			panic(err)
+		}
+	}()
+
+	err = clients.NewPaymentClient()
+	if err != nil {
+		panic(err)
+	}
+	defer func(){
+		if err = clients.DisconnectPaymentClient(); err != nil {
 			panic(err)
 		}
 	}()
