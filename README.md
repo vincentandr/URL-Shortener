@@ -1,4 +1,6 @@
-# shopping-microservice
+# shopping-microservice (In Progress)
+
+![Untitled Diagram drawio](https://user-images.githubusercontent.com/42005057/147433990-36e7bca3-ff3d-4285-8f1c-4e48183089b0.png)
 
 ## Proto compiler command
 
