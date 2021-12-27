@@ -229,7 +229,10 @@ func main() {
 		fmt.Println(err)
 	}
 	defer func(){
-		if err = rmqClient.Close(); err != nil {
+		if err = rmqClient.CloseChannel(); err != nil {
+			fmt.Println(err)
+		}
+		if err = rmqClient.CloseConn(); err != nil {
 			fmt.Println(err)
 		}
 	}()
@@ -239,6 +242,11 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer func(){
+		if err = rmqClient.CancelConsumerDelivery(consumer.Tag); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	// Listen to rabbitmq events and handle them
 	consumer.EventHandler(action)

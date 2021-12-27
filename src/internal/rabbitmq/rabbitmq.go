@@ -58,9 +58,25 @@ func NewRabbitMQ() (*Rabbitmq, error) {
 	}, nil
 }
 
-func (r* Rabbitmq) Close() error {
+func (r* Rabbitmq) CancelConsumerDelivery(tag string) error {
+	if err := r.Channel.Cancel(tag, false); err != nil{
+		return fmt.Errorf("Rabbitmq cancel channel error: %v", err)
+	}
+
+	return nil
+}
+
+func (r* Rabbitmq) CloseConn() error {
 	if err := r.Conn.Close(); err != nil{
 		return fmt.Errorf("Rabbitmq close connection error: %v", err)
+	}
+
+	return nil
+}
+
+func (r* Rabbitmq) CloseChannel() error {
+	if err := r.Channel.Close(); err != nil{
+		return fmt.Errorf("Rabbitmq close channel error: %v", err)
 	}
 
 	return nil

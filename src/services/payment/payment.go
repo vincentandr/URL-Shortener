@@ -84,7 +84,10 @@ func main() {
 		fmt.Println(err)
 	}
 	defer func(){
-		if err = rmqClient.Close(); err != nil {
+		if err = rmqClient.CloseChannel(); err != nil {
+			fmt.Println(err)
+		}
+		if err = rmqClient.CloseConn(); err != nil {
 			fmt.Println(err)
 		}
 	}()

@@ -132,10 +132,7 @@ func (a *Action) UpdateProducts(ctx context.Context, items []model.Product) (err
 		}
 
 		if int(res.ModifiedCount) != len(items) {
-			sessCtx.AbortTransaction(ctx)
-
-			fmt.Println(int(res.ModifiedCount), len(items))
-			return nil, fmt.Errorf("not all items qty are updated, not atomic")
+			sessCtx.AbortTransaction(sessCtx)
 		}
 
 		return nil, nil

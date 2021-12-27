@@ -15,6 +15,7 @@ import (
 // RabbitMQ ...
 type RbmqListener struct {
 	Msgs <-chan amqp.Delivery
+	Tag string
 }
 
 // NewRabbitMQ instantiates the RabbitMQ instances using configuration defined in environment variables.
@@ -41,9 +42,11 @@ func NewConsumer(r *rbmq.Rabbitmq) (*RbmqListener, error) {
 		return nil, fmt.Errorf("amqChannel.ExchangeDeclare %w", err)
 	}
 
+	tag := "cartConsumer"
+
 	msgs, err := r.Channel.Consume(
                 q.Name, // queue
-                "",     // consumer
+                tag,     // consumer
                 false,   // auto ack
                 false,  // exclusive
                 false,  // no local
@@ -54,7 +57,7 @@ func NewConsumer(r *rbmq.Rabbitmq) (*RbmqListener, error) {
 		return nil, fmt.Errorf("r.Channel.Consume %w", err)
 	}
 
-	return &RbmqListener{Msgs: msgs}, nil
+	return &RbmqListener{Msgs: msgs, Tag: tag}, nil
 }
 
 func (l *RbmqListener) EventHandler(a *db.Action) {
@@ -70,6 +73,7 @@ func (l *RbmqListener) EventHandler(a *db.Action) {
 				if err != nil{
 					fmt.Println(err)
 				}
+				msg.Ack(false)
 			}
 		}
 	}()
