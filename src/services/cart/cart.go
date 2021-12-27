@@ -5,19 +5,27 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
+	"github.com/joho/godotenv"
+	catalogGrpc "github.com/vincentandr/shopping-microservice/src/internal/grpc/catalog"
+	paymentGrpc "github.com/vincentandr/shopping-microservice/src/internal/grpc/payment"
+	rbmq "github.com/vincentandr/shopping-microservice/src/internal/rabbitmq"
+	rds "github.com/vincentandr/shopping-microservice/src/internal/redis"
 	db "github.com/vincentandr/shopping-microservice/src/services/cart/cartdb"
 	pb "github.com/vincentandr/shopping-microservice/src/services/cart/cartpb"
-	"github.com/vincentandr/shopping-microservice/src/services/cart/clients"
-	"github.com/vincentandr/shopping-microservice/src/services/cart/rmq"
-	"github.com/vincentandr/shopping-microservice/src/services/catalog/catalogpb"
+	rmqConsumer "github.com/vincentandr/shopping-microservice/src/services/cart/rmq-consumer"
+	catalogpb "github.com/vincentandr/shopping-microservice/src/services/catalog/catalogpb"
+	paymentpb "github.com/vincentandr/shopping-microservice/src/services/payment/paymentpb"
 	"google.golang.org/grpc"
 )
 
-const (
-	port = ":50052"
+var (
+	catalogClient catalogpb.CatalogServiceClient
+	paymentClient paymentpb.PaymentServiceClient
+	action *db.Action
 )
 
 type Server struct {
@@ -26,7 +34,7 @@ type Server struct {
 
 func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (*pb.ItemsResponse, error) {
 	// Get product ids and its quantity in cart by userId
-	res, err := db.GetCartItems(ctx, in.UserId)
+	res, err := action.GetCartItems(ctx, in.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +51,7 @@ func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (
 	}
 
 	// RPC call catalog server to get cart products' names
-	products, err := clients.GetProductsByIds(ctx, ids)
+	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -58,7 +66,7 @@ func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (
 }
 
 func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequest) (*pb.ItemsResponse, error) {
-	res, err := db.AddOrUpdateCart(ctx, in.UserId, in.ProductId, int(in.NewQty))
+	res, err := action.AddOrUpdateCart(ctx, in.UserId, in.ProductId, int(in.NewQty))
 	if err != nil{
 		return nil, err
 	}
@@ -75,7 +83,7 @@ func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequ
 	}
 
 	// RPC call catalog server to get cart products' names
-	products, err := clients.GetProductsByIds(ctx, ids)
+	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -90,7 +98,7 @@ func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequ
 }
 
 func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCartRequest) (*pb.ItemsResponse, error) {
-	res, err := db.RemoveItemFromCart(ctx, in.UserId, in.ProductId)
+	res, err := action.RemoveItemFromCart(ctx, in.UserId, in.ProductId)
 	if err != nil{
 		return nil, err
 	}
@@ -107,7 +115,7 @@ func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCa
 	}
 
 	// RPC call catalog server to get cart products' names
-	products, err := clients.GetProductsByIds(ctx, ids)
+	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -122,7 +130,7 @@ func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCa
 }
 
 func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartItemsRequest) (*pb.ItemsResponse, error) {
-	res, err := db.RemoveAllCartItems(ctx, in.UserId)
+	res, err := action.RemoveAllCartItems(ctx, in.UserId)
 	if err != nil{
 		return nil, err
 	}
@@ -139,7 +147,7 @@ func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartIte
 	}
 
 	// RPC call catalog server to get cart products' names
-	products, err := clients.GetProductsByIds(ctx, ids)
+	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -161,7 +169,13 @@ func (s *Server) Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.Chec
 	}
 
 	// RPC call to payment checkout to create order and return order id
-	response, err := clients.PaymentCheckout(ctx, in.UserId, res)
+	itemsForOrder := make([]*paymentpb.ItemResponse, len(res.Products))
+
+	for i, item := range res.Products {
+		itemsForOrder[i] = &paymentpb.ItemResponse{ProductId: item.ProductId, Name: item.Name, Price: item.Price, Qty: item.Qty}
+	}
+
+	response, err := paymentClient.PaymentCheckout(ctx, &paymentpb.CheckoutRequest{UserId: in.UserId, Items: itemsForOrder})
 	if err != nil{
 		return nil, err
 	}
@@ -197,33 +211,48 @@ func AppendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map
 }
 
 func main() {
-    // Init Redis Db
-	db.NewDb()
-	defer db.Disconnect()
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("failed to load environment variables: %v", err)
+	}
 
-	// RabbitMQ Publisher
-	err := rmq.NewRabbitMQ()
+    // Init Redis db
+	rdb := rds.NewDb()
+	defer rdb.Close()
+
+	// Database actions
+	action = db.NewAction(rdb.Conn)
+
+	// RabbitMQ client
+	rmqClient, err := rbmq.NewRabbitMQ()
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer func(){
-		if err = rmq.Close(); err != nil {
+		if err = rmqClient.Close(); err != nil {
 			fmt.Println(err)
 		}
 	}()
 
-	rmq.EventHandler()
+	// Instantiate a new rabbitmq consumer
+	consumer, err := rmqConsumer.NewConsumer(rmqClient)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// Listen to rabbitmq events and handle them
+	consumer.EventHandler(action)
     
     // gRPC
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 	
-	err = clients.NewCatalogClient(ctx)
+	catalogRpc, err := catalogGrpc.NewGrpcClient(ctx)
 	if err != nil {
 		panic(err)
 	}
 	defer func(){
-		if err = clients.DisconnectCatalogClient(); err != nil {
+		if err = catalogRpc.Close(); err != nil {
 			panic(err)
 		}
 	}()
@@ -231,17 +260,20 @@ func main() {
 	ctx, cancel = context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
-	err = clients.NewPaymentClient(ctx)
+	paymentRpc, err := paymentGrpc.NewGrpcClient(ctx)
 	if err != nil {
 		panic(err)
 	}
 	defer func(){
-		if err = clients.DisconnectPaymentClient(); err != nil {
+		if err = paymentRpc.Close(); err != nil {
 			panic(err)
 		}
 	}()
 
-	lis, err := net.Listen("tcp", port)
+	catalogClient = catalogRpc.Client
+	paymentClient = paymentRpc.Client
+
+	lis, err := net.Listen("tcp", os.Getenv("GRPC_CART_PORT"))
 	if err != nil {
 		log.Panicf("failed to listen: %v", err)
 	}

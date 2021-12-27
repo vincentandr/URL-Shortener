@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+	"github.com/vincentandr/shopping-microservice/src/internal/mongodb"
+	rbmq "github.com/vincentandr/shopping-microservice/src/internal/rabbitmq"
 	"github.com/vincentandr/shopping-microservice/src/model"
 	db "github.com/vincentandr/shopping-microservice/src/services/catalog/catalogdb"
 	pb "github.com/vincentandr/shopping-microservice/src/services/catalog/catalogpb"
-	"github.com/vincentandr/shopping-microservice/src/services/catalog/rmq"
+	rmqConsumer "github.com/vincentandr/shopping-microservice/src/services/catalog/rmq-consumer"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc"
 )
 
-const (
-	port = ":50051"
+var (
+	action *db.Action
 )
 
 type Server struct {
@@ -24,7 +28,7 @@ type Server struct {
 }
 
 func (s *Server) GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetProductsResponse, error) {
-	cursor, err := db.GetProducts(ctx)
+	cursor, err := action.GetProducts(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +66,7 @@ func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRe
 		productIds[i] = objectId
 	}
 
-	cursor, err := db.GetProductsByIds(ctx, productIds)
+	cursor, err := action.GetProductsByIds(ctx, productIds)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +93,7 @@ func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRe
 }
 
 func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByNameRequest) (*pb.GetProductsResponse, error) {
-	cursor, err := db.GetProductsByName(ctx, in.Name)
+	cursor, err := action.GetProductsByName(ctx, in.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -116,28 +120,59 @@ func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByName
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("failed to load environment variables: %v", err)
+	}
+
 	// Establish connection to mysql db
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
-	db.NewDb(ctx)
-	defer db.Disconnect(ctx)
+	client, err:= mongodb.NewDb(ctx)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer client.Close()
 
-	// RabbitMQ Publisher
-	err := rmq.NewRabbitMQ()
+	err = client.Conn.Ping(context.Background(), nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	action, err = db.NewAction(client)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// Seed collection
+	err = action.SeedCollection(context.Background())
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// RabbitMQ client
+	rmqClient, err := rbmq.NewRabbitMQ()
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer func(){
-		if err = rmq.Close(); err != nil {
+		if err = rmqClient.Close(); err != nil {
 			fmt.Println(err)
 		}
 	}()
 
-	rmq.EventHandler()
+	// Instantiate a new rabbitmq consumer
+	consumer, err := rmqConsumer.NewConsumer(rmqClient)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// Listen to rabbitmq events and handle them
+	consumer.EventHandler(action)
 
 	// gRPC
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", os.Getenv("GRPC_CATALOG_PORT"))
 	if err != nil {
 		log.Panicf("failed to listen: %v", err)
 	}

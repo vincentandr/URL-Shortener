@@ -1,4 +1,4 @@
-package carthandlers
+package cartHandlers
 
 import (
 	"context"
@@ -8,7 +8,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/vincentandr/shopping-microservice/src/services/bff/clients"
+	pb "github.com/vincentandr/shopping-microservice/src/services/cart/cartpb"
+)
+
+var (
+	Client pb.CartServiceClient
 )
 
 // Cart service
@@ -19,7 +23,7 @@ func GetCartItems(w http.ResponseWriter, r *http.Request) {
 
 	args := mux.Vars(r)
 
-	items, err := clients.GetCartItems(ctx, args["userId"])
+	items, err := Client.GetCartItems(ctx, &pb.GetCartItemsRequest{UserId: args["userId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -45,8 +49,7 @@ func AddOrUpdateCartQty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-
-	items, err := clients.AddOrUpdateCartQty(ctx, args["userId"], args["productId"], qty)
+	items, err := Client.AddOrUpdateCart(ctx, &pb.AddOrUpdateCartRequest{UserId: args["userId"], ProductId: args["productId"], NewQty: int32(qty)})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -66,7 +69,7 @@ func RemoveCartItem(w http.ResponseWriter, r *http.Request) {
 
 	args := mux.Vars(r)
 
-	items, err := clients.RemoveCartItem(ctx, args["userId"], args["productId"])
+	items, err := Client.RemoveItemFromCart(ctx, &pb.RemoveItemFromCartRequest{UserId: args["userId"], ProductId: args["productId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -86,7 +89,7 @@ func RemoveAllCartItems(w http.ResponseWriter, r *http.Request) {
 
 	args := mux.Vars(r)
 
-	items, err := clients.RemoveAllCartItems(ctx, args["userId"])
+	items, err := Client.RemoveAllCartItems(ctx, &pb.RemoveAllCartItemsRequest{UserId: args["userId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -106,7 +109,7 @@ func Checkout(w http.ResponseWriter, r *http.Request) {
 
 	args := mux.Vars(r)
 
-	orderId, err := clients.Checkout(ctx, args["userId"])
+	orderId, err := Client.Checkout(ctx, &pb.CheckoutRequest{UserId: args["userId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

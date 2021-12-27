@@ -1,4 +1,4 @@
-package paymenthandlers
+package paymentHandlers
 
 import (
 	"context"
@@ -7,7 +7,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/vincentandr/shopping-microservice/src/services/bff/clients"
+	pb "github.com/vincentandr/shopping-microservice/src/services/payment/paymentpb"
+)
+
+var (
+	Client pb.PaymentServiceClient
 )
 
 func MakePayment(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +20,7 @@ func MakePayment(w http.ResponseWriter, r *http.Request) {
 
 	args := mux.Vars(r)
 
-	items, err := clients.MakePayment(ctx, args["orderId"])
+	items, err := Client.MakePayment(ctx, &pb.PaymentRequest{OrderId: args["orderId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -5,17 +5,22 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+	"github.com/vincentandr/shopping-microservice/src/internal/mongodb"
+	rbmq "github.com/vincentandr/shopping-microservice/src/internal/rabbitmq"
 	db "github.com/vincentandr/shopping-microservice/src/services/payment/paymentdb"
 	pb "github.com/vincentandr/shopping-microservice/src/services/payment/paymentpb"
-	"github.com/vincentandr/shopping-microservice/src/services/payment/rmq"
+	rmqPublisher "github.com/vincentandr/shopping-microservice/src/services/payment/rmq-publisher"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc"
 )
 
-const (
-	port = ":50053"
+var (
+	rmqClient *rbmq.Rabbitmq
+	action *db.Action
 )
 
 type Server struct {
@@ -24,7 +29,7 @@ type Server struct {
 
 func (s *Server) PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
 	// Change order status to draft
-	orderId, err := db.Checkout(ctx, in.UserId, in.Items)
+	orderId, err := action.Checkout(ctx, in.UserId, in.Items)
 	if err != nil {
 		return nil, err
 	}
@@ -38,13 +43,13 @@ func (s *Server) MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.Pa
 	if err != nil{
 		return nil, fmt.Errorf("failed to convert from hex to objectID: %v", err)
 	}
-	order, err := db.GetOrder(ctx, orderId)
+	order, err := action.GetOrder(ctx, orderId)
 	if err != nil{
 		return nil, err
 	}
 
 	// Fire event to product catalog reducing qty and to cart emptying user cart
-	err = rmq.PaymentSuccessfulEventPublish(order)
+	err = rmqPublisher.PaymentSuccessfulEventPublish(rmqClient.Channel, order)
 	if err != nil {
 		return nil, err
 	}
@@ -53,26 +58,39 @@ func (s *Server) MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.Pa
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("failed to load environment variables: %v", err)
+	}
+	
 	// Create mongodb database
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
-	db.NewDb(ctx)
-	defer db.Disconnect(ctx)
-
-	// RabbitMQ Publisher
-	err := rmq.NewRabbitMQ()
+	client, err:= mongodb.NewDb(ctx)
 	if err != nil {
-		fmt.Println("RabbitMQ initialization error")
+		fmt.Println(err)
+	}
+	defer client.Close()
+
+	action, err = db.NewAction(client)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// RabbitMQ client
+	rmqClient, err = rbmq.NewRabbitMQ()
+	if err != nil {
+		fmt.Println(err)
 	}
 	defer func(){
-		if err = rmq.Close(); err != nil {
-			fmt.Println("RabbitMQ close connection error")
+		if err = rmqClient.Close(); err != nil {
+			fmt.Println(err)
 		}
 	}()
 
 	// gRPC
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", os.Getenv("GRPC_PAYMENT_PORT"))
 	if err != nil {
 		log.Panicf("failed to listen: %v", err)
 	}

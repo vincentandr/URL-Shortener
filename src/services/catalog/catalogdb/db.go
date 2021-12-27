@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vincentandr/shopping-microservice/src/internal/mongodb"
 	"github.com/vincentandr/shopping-microservice/src/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,29 +12,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	dbConn *mongo.Client
-	catalogDb *mongo.Database
-	catalogCollection *mongo.Collection
-)
+type Action struct {
+	Conn *mongo.Client
+	Db *mongo.Database
+	Collection *mongo.Collection
+}
 
-func NewDb(ctx context.Context){
-	// User:pass@(addr:port)/database_name
-	conn, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:30001,localhost:30002,localhost:30003/?replicaSet=shop-mongo-set"))
-	if err != nil{
-		fmt.Print("failed to establish a new database connection")
-		panic(err)
-	}
-
-	dbConn = conn
-	
-	// Create database
-	catalogDb = dbConn.Database("catalog")
-	catalogCollection = catalogDb.Collection("catalog")
+func NewAction(conn *mongodb.Mongo) (*Action, error) {
+	catalogCollection := conn.Db.Collection("catalogs")
 
 	// Create index
-	_, err = catalogCollection.Indexes().CreateOne(
-        ctx,
+	_, err := catalogCollection.Indexes().CreateOne(
+        context.Background(),
         mongo.IndexModel{
                 Keys: bson.D{{
                         Key:"name", Value: "text",
@@ -41,17 +31,14 @@ func NewDb(ctx context.Context){
         },
 	)
 	if err != nil {
-		fmt.Println("failed to create index")
+		return nil, fmt.Errorf("failed to create index: %v", err)
 	}
 
-	// Seed collection
-	if err = SeedCollection(ctx); err != nil {
-		fmt.Println(err)
-	}
+    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: catalogCollection}, nil
 }
 
-func SeedCollection(ctx context.Context) error {
-	count, err := catalogCollection.CountDocuments(ctx, bson.D{})
+func (a *Action) SeedCollection(ctx context.Context) error {
+	count, err := a.Collection.CountDocuments(ctx, bson.D{})
 	if err == nil && count == 0 {
 		docs := []interface{}{
 			bson.D{
@@ -66,7 +53,7 @@ func SeedCollection(ctx context.Context) error {
 			},
 		}
 
-		_, err = catalogCollection.InsertMany(ctx, docs)
+		_, err = a.Collection.InsertMany(ctx, docs)
 		if err != nil{
 			return fmt.Errorf("failed to seed documents: %v", err)
 		}
@@ -76,16 +63,8 @@ func SeedCollection(ctx context.Context) error {
 	return nil
 }
 
-func Disconnect(ctx context.Context) {
-	// Defer close connection
-	if err := dbConn.Disconnect(ctx); err != nil{
-		fmt.Print("failed to disconnect db connection: ")
-		panic(err)
-	}
-}
-
-func GetProducts(ctx context.Context) (*mongo.Cursor, error){
-	cursor, err := catalogCollection.Find(ctx, bson.D{})
+func (a *Action) GetProducts(ctx context.Context) (*mongo.Cursor, error){
+	cursor, err := a.Collection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
@@ -93,7 +72,7 @@ func GetProducts(ctx context.Context) (*mongo.Cursor, error){
 	return cursor, nil
 }
 
-func GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cursor, error){
+func (a *Action) GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cursor, error){
 	// Set what fields to get / select
 	projection := bson.D{
 		{Key:"_id", Value: 1},
@@ -101,7 +80,7 @@ func GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cur
 		{Key:"price", Value: 1},
 	}
 
-	cursor, err := catalogCollection.Find(
+	cursor, err := a.Collection.Find(
 		ctx, 
 		bson.M{"_id": bson.M{"$in": ids}},
 		options.Find().SetProjection(projection),
@@ -113,9 +92,9 @@ func GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cur
 	return cursor, nil
 }
 
-func GetProductsByName(ctx context.Context, name string) (*mongo.Cursor, error){
+func (a *Action) GetProductsByName(ctx context.Context, name string) (*mongo.Cursor, error){
 	// equal to LIKE %name%
-	cursor, err := catalogCollection.Find(ctx, bson.M{"name": primitive.Regex{Pattern: name, Options: ""}})
+	cursor, err := a.Collection.Find(ctx, bson.M{"name": primitive.Regex{Pattern: name, Options: ""}})
 	if err != nil {
 		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
@@ -123,7 +102,7 @@ func GetProductsByName(ctx context.Context, name string) (*mongo.Cursor, error){
 	return cursor, nil
 }
 
-func UpdateProducts(ctx context.Context, items []model.Product) (error){
+func (a *Action) UpdateProducts(ctx context.Context, items []model.Product) (error){
 	
 	var operations []mongo.WriteModel
 
@@ -144,7 +123,7 @@ func UpdateProducts(ctx context.Context, items []model.Product) (error){
 	// Create transaction function
 	callback := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		// Create new update operation for each cart item
-		res, err := catalogCollection.BulkWrite(
+		res, err := a.Collection.BulkWrite(
 			sessCtx,
 			operations,
 		)
@@ -153,7 +132,7 @@ func UpdateProducts(ctx context.Context, items []model.Product) (error){
 		}
 
 		if int(res.ModifiedCount) != len(items) {
-			sessCtx.AbortTransaction(sessCtx)
+			sessCtx.AbortTransaction(ctx)
 
 			fmt.Println(int(res.ModifiedCount), len(items))
 			return nil, fmt.Errorf("not all items qty are updated, not atomic")
@@ -162,7 +141,7 @@ func UpdateProducts(ctx context.Context, items []model.Product) (error){
 		return nil, nil
 	}
 	// Start a transaction session
-	session, err := dbConn.StartSession()
+	session, err := a.Conn.StartSession()
 	if err != nil {
 		return err
 	}

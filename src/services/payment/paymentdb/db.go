@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/vincentandr/shopping-microservice/src/internal/mongodb"
 	"github.com/vincentandr/shopping-microservice/src/model"
 	pb "github.com/vincentandr/shopping-microservice/src/services/payment/paymentpb"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,28 +14,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	dbConn *mongo.Client
-	orderDb *mongo.Database
-	ordersCollection *mongo.Collection
-)
+type Action struct {
+	Conn *mongo.Client
+	Db *mongo.Database
+	Collection *mongo.Collection
+}
 
-func NewDb(ctx context.Context){
-	conn, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil{
-		fmt.Print("failed to establish a new database connection")
-		panic(err)
-	}
-
-	dbConn = conn
-	
-	// Create database
-	orderDb = dbConn.Database("order")
-	ordersCollection = orderDb.Collection("orders")
+func NewAction(conn *mongodb.Mongo) (*Action, error) {
+	paymentCollection := conn.Db.Collection("orders")
 
 	// Create index
-	_, err = ordersCollection.Indexes().CreateOne(
-        ctx,
+	_, err := paymentCollection.Indexes().CreateOne(
+        context.Background(),
         mongo.IndexModel{
                 Keys: bson.D{
                         {Key: "user_id", Value: "text"},
@@ -42,18 +33,13 @@ func NewDb(ctx context.Context){
         },
 	)
 	if err != nil {
-		fmt.Println("failed to create index")
+		return nil, fmt.Errorf("failed to create index: %v", err)
 	}
+
+    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: paymentCollection}, nil
 }
 
-func Disconnect(ctx context.Context) {
-	if err := dbConn.Disconnect(ctx); err != nil{
-		fmt.Print("failed to disconnect db connection: ")
-		panic(err)
-	}
-}
-
-func GetOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder, error) {
+func (a *Action) GetOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder, error) {
 	var order model.UserOrder
 
 	projection := bson.D{
@@ -61,7 +47,7 @@ func GetOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder,
 		{Key:"items", Value: 1},
 	}
 
-	if err := ordersCollection.FindOne(ctx, bson.M{"_id":orderId}, options.FindOne().SetProjection(projection)).Decode(&order); err != nil{
+	if err := a.Collection.FindOne(ctx, bson.M{"_id":orderId}, options.FindOne().SetProjection(projection)).Decode(&order); err != nil{
 		return model.UserOrder{}, fmt.Errorf("failed to get order: %v", err)
 	}
 
@@ -69,7 +55,7 @@ func GetOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder,
 }
 
 // Create order draft
-func Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (string, error){
+func (a *Action) Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (string, error){
 	var itemsBson []bson.M
 
 	for _, item := range items {
@@ -89,13 +75,13 @@ func Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (str
 	// Create transaction function
 	callback := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		// Delete existing order draft document by userId
-		_, err := ordersCollection.DeleteOne(ctx, bson.M{"user_id": userId, "status": "draft"})
+		_, err := a.Collection.DeleteOne(ctx, bson.M{"user_id": userId, "status": "draft"})
 		if err != nil {
 			return nil, fmt.Errorf("deletion of existing order draft failed: %v", err)
 		}
 
 		// Insert order document
-		res, err := ordersCollection.InsertOne(ctx, bson.M{
+		res, err := a.Collection.InsertOne(ctx, bson.M{
 			"user_id": userId,
 			"items": itemsBson,
 			"status": "draft",
@@ -107,7 +93,7 @@ func Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (str
 		return res.InsertedID, nil
 	}
 	// Start a transaction session
-	session, err := dbConn.StartSession()
+	session, err := a.Conn.StartSession()
 	if err != nil {
 		return "", err
 	}
@@ -124,6 +110,6 @@ func Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (str
 }
 
 // Change status to paid
-func MakePayment(ctx context.Context, orderId string) (error){
+func (a *Action) MakePayment(ctx context.Context, orderId string) (error){
 	return nil
 }

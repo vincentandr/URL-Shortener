@@ -2,9 +2,9 @@ package routes
 
 import (
 	"github.com/gorilla/mux"
-	carthandlers "github.com/vincentandr/shopping-microservice/src/services/bff/handlers/cart"
-	cataloghandlers "github.com/vincentandr/shopping-microservice/src/services/bff/handlers/catalog"
-	paymenthandlers "github.com/vincentandr/shopping-microservice/src/services/bff/handlers/payment"
+	cartHandlers "github.com/vincentandr/shopping-microservice/src/services/bff/handlers/cart"
+	catalogHandlers "github.com/vincentandr/shopping-microservice/src/services/bff/handlers/catalog"
+	paymentHandlers "github.com/vincentandr/shopping-microservice/src/services/bff/handlers/payment"
 )
 
 type Router struct {
@@ -22,16 +22,16 @@ func NewRouter() *Router{
 
 func (r *Router) routes() {
 	// Product catalog
-	r.HandleFunc("/products", cataloghandlers.GetProducts).Methods("GET")
-	r.HandleFunc("/products/search", cataloghandlers.GetProductsByName).Methods("GET")
+	r.HandleFunc("/products", catalogHandlers.GetProducts).Methods("GET")
+	r.HandleFunc("/products/search", catalogHandlers.GetProductsByName).Methods("GET")
 
 	// Cart
-	r.HandleFunc("/cart/{userId}", carthandlers.GetCartItems).Methods("GET")
-	r.HandleFunc("/cart/{userId}/{productId}", carthandlers.AddOrUpdateCartQty).Methods("PUT")
-	r.HandleFunc("/cart/{userId}/{productId}", carthandlers.RemoveCartItem).Methods("DELETE")
-	r.HandleFunc("/cart/{userId}", carthandlers.RemoveAllCartItems).Methods("DELETE")
-	r.HandleFunc("/cart/checkout/{userId}", carthandlers.Checkout).Methods("GET")
+	r.HandleFunc("/cart/{userId}", cartHandlers.GetCartItems).Methods("GET")
+	r.HandleFunc("/cart/{userId}/{productId}", cartHandlers.AddOrUpdateCartQty).Methods("PUT")
+	r.HandleFunc("/cart/{userId}/{productId}", cartHandlers.RemoveCartItem).Methods("DELETE")
+	r.HandleFunc("/cart/{userId}", cartHandlers.RemoveAllCartItems).Methods("DELETE")
+	r.HandleFunc("/cart/checkout/{userId}", cartHandlers.Checkout).Methods("GET")
 
 	// Payment
-	r.HandleFunc("/payment/{orderId}", paymenthandlers.MakePayment).Methods("PUT")
+	r.HandleFunc("/payment/{orderId}", paymentHandlers.MakePayment).Methods("PUT")
 }

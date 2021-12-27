@@ -1,4 +1,4 @@
-package cataloghandlers
+package catalogHandlers
 
 import (
 	"context"
@@ -6,7 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/vincentandr/shopping-microservice/src/services/bff/clients"
+	pb "github.com/vincentandr/shopping-microservice/src/services/catalog/catalogpb"
+)
+
+var (
+	Client pb.CatalogServiceClient
 )
 
 func GetProducts(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +18,7 @@ func GetProducts(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// Call function in catalog_client
-	products, err := clients.GetProducts(ctx)
+	products, err := Client.GetProducts(ctx, &pb.EmptyRequest{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -35,7 +39,7 @@ func GetProductsByName(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("name")
 
-	products, err := clients.GetProductsByName(ctx, name)
+	products, err := Client.GetProductsByName(ctx, &pb.GetProductsByNameRequest{Name: name})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

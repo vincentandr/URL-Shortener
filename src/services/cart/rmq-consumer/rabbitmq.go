@@ -1,48 +1,25 @@
-package rmq
+package rmqConsumer
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"fmt"
 
 	"github.com/streadway/amqp"
+	rbmq "github.com/vincentandr/shopping-microservice/src/internal/rabbitmq"
 	"github.com/vincentandr/shopping-microservice/src/model"
-	events "github.com/vincentandr/shopping-microservice/src/services/cart/event-handlers"
+	db "github.com/vincentandr/shopping-microservice/src/services/cart/cartdb"
 )
 
 // RabbitMQ ...
-var (
-	amqConn *amqp.Connection
-	amqChannel    *amqp.Channel
-	msgs <-chan amqp.Delivery
-)
+type RbmqListener struct {
+	Msgs <-chan amqp.Delivery
+}
 
 // NewRabbitMQ instantiates the RabbitMQ instances using configuration defined in environment variables.
-func NewRabbitMQ() (error) {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		return fmt.Errorf("amqp.Dial %w", err)
-	}
-
-	ch, err := conn.Channel()
-	if err != nil {
-		return fmt.Errorf("conn.Channel %w", err)
-	}
-
-	err = ch.ExchangeDeclare(
-		"tasks", // name
-		"topic", // type
-		true,    // durable
-		false,   // auto-deleted
-		false,   // internal
-		false,   // no-wait
-		nil,     // arguments
-	)
-	if err != nil {
-		return fmt.Errorf("ch.ExchangeDeclare %w", err)
-	}
-
-	q, err := ch.QueueDeclare(
+func NewConsumer(r *rbmq.Rabbitmq) (*RbmqListener, error) {
+	q, err := r.Channel.QueueDeclare(
                 "cartQueue",    // name
                 false, // durable
                 false, // delete when unused
@@ -51,20 +28,20 @@ func NewRabbitMQ() (error) {
                 nil,   // arguments
     )
 	if err != nil {
-		return fmt.Errorf("amqChannel.QueueDeclare %w", err)
+		return nil, fmt.Errorf("amqChannel.QueueDeclare %w", err)
 	}
 
-	err = ch.QueueBind(
+	err = r.Channel.QueueBind(
                         q.Name,
                         "event.payment.success",
                         "tasks",
                         false,
                         nil)
 	if err != nil {
-		return fmt.Errorf("amqChannel.ExchangeDeclare %w", err)
+		return nil, fmt.Errorf("amqChannel.ExchangeDeclare %w", err)
 	}
 
-	msgs, err = ch.Consume(
+	msgs, err := r.Channel.Consume(
                 q.Name, // queue
                 "",     // consumer
                 false,   // auto ack
@@ -74,37 +51,34 @@ func NewRabbitMQ() (error) {
                 nil,    // args
     )
 	if err != nil {
-		return fmt.Errorf("ch.Consume %w", err)
+		return nil, fmt.Errorf("r.Channel.Consume %w", err)
 	}
 
-	amqConn = conn
-	amqChannel = ch
-
-	return nil
+	return &RbmqListener{Msgs: msgs}, nil
 }
 
-func Close() error {
-	if err := amqConn.Close(); err != nil{
-		return fmt.Errorf("amqp close connection error: %v", err)
-	}
-
-	return nil
-}
-
-func EventHandler() {
+func (l *RbmqListener) EventHandler(a *db.Action) {
 	go func(){
-		for msg := range msgs {
+		for msg := range l.Msgs {
 			var order model.UserOrder
 
 			switch msg.RoutingKey {
 			case "event.payment.success":
 				gob.NewDecoder(bytes.NewReader(msg.Body)).Decode(&order)
 
-				err := events.EventPaymentSuccessful(order)
+				err := EventPaymentSuccessful(a, order)
 				if err != nil{
 					fmt.Println(err)
 				}
 			}
 		}
 	}()
+}
+
+func EventPaymentSuccessful(a *db.Action, order model.UserOrder) error {
+	_, err := a.RemoveAllCartItems(context.Background(), order.User_id)
+	if err != nil {
+		return fmt.Errorf("failed to execute remove cart items event payment: %v", err)
+	}
+	return nil
 }
