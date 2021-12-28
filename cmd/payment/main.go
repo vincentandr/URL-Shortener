@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	db "github.com/vincentandr/shopping-microservice/internal/db/payment"
+	db "github.com/vincentandr/shopping-microservice/cmd/payment/internal/db"
+	rmqPayment "github.com/vincentandr/shopping-microservice/cmd/payment/internal/pubsub"
 	"github.com/vincentandr/shopping-microservice/internal/mongodb"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/payment"
-	rmqPayment "github.com/vincentandr/shopping-microservice/internal/pubsub/payment"
 	rbmq "github.com/vincentandr/shopping-microservice/internal/rabbitmq"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc"

@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	cartHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handlers/cart"
+	catalogHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handlers/catalog"
+	paymentHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handlers/payment"
+	"github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/routes"
 	cartGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/cart"
 	catalogGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/catalog"
 	paymentGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/payment"
-	cartHandlers "github.com/vincentandr/shopping-microservice/internal/web/handlers/cart"
-	catalogHandlers "github.com/vincentandr/shopping-microservice/internal/web/handlers/catalog"
-	paymentHandlers "github.com/vincentandr/shopping-microservice/internal/web/handlers/payment"
-	"github.com/vincentandr/shopping-microservice/internal/web/routes"
 )
 
 const (
