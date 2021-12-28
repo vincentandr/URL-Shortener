@@ -96,20 +96,20 @@ Run these files from the root project directory
 
 Catalog microservice
 ```
-go run cmd/catalog/catalog.go
+go run cmd/catalog/main.go
 ```
 
 Cart microservice
 ```
-go run cmd/cart/cart.go
+go run cmd/cart/main.go
 ```
 
 Payment microservice
 ```
-go run cmd/payment/payment.go
+go run cmd/payment/main.go
 ```
 
 Backend for frontend microservice
 ```
-go run cmd/bff/bff.go
+go run cmd/bff/main.go
 ```
