@@ -86,8 +86,9 @@ docker run --name cart-redis -d redis
 ```
 
 ### RabbitMQ
+15672 for RabbitMQ Manager and 5672 for connection requests
 ```
-docker run -d --hostname shop-rabbitmq -p 8080:15672 --name shop-rabbitmq rabbitmq:3.9.11-management
+docker run -d --hostname shop-rabbitmq --name shop-rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3.9.11-management
 ```
 
 ## Run main.go
@@ -95,20 +96,20 @@ Run these files from the root project directory
 
 Catalog microservice
 ```
-go run src/services/catalog/catalog.go
+go run cmd/catalog/catalog.go
 ```
 
 Cart microservice
 ```
-go run src/services/cart/cart.go
+go run cmd/cart/cart.go
 ```
 
 Payment microservice
 ```
-go run src/services/payment/payment.go
+go run cmd/payment/payment.go
 ```
 
 Backend for frontend microservice
 ```
-go run src/services/bff/bff.go
+go run cmd/bff/bff.go
 ```
