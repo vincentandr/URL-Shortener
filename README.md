@@ -25,7 +25,7 @@
 ```
 
 ## Docker commands
-**Create data folder for mongo DB replica set first:**
+**Create `data` folder for mongo DB replica set first:**
 ```
 shopping-microservice/
   ...
