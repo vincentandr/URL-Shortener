@@ -122,7 +122,7 @@ func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByName
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Printf("failed to load environment variables: %v", err)
+		fmt.Printf("failed to load environment variables: %v\n", err)
 	}
 
 	// Establish connection to mysql db

@@ -213,7 +213,7 @@ func AppendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Printf("failed to load environment variables: %v", err)
+		fmt.Printf("failed to load environment variables: %v\n", err)
 	}
 
     // Init Redis db
@@ -293,7 +293,7 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterCartServiceServer(s, &Server{})
 
-	log.Printf("server listening at %v", lis.Addr())
+	log.Printf("server listening at %v\n", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		fmt.Printf("failed to serve: %v\n", err)
 	}

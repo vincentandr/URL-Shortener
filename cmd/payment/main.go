@@ -60,7 +60,7 @@ func (s *Server) MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.Pa
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Printf("failed to load environment variables: %v", err)
+		fmt.Printf("failed to load environment variables: %v\n", err)
 	}
 	
 	// Create mongodb database

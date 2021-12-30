@@ -14,7 +14,7 @@ RUN go mod download
 COPY ./cmd/cart ./cmd/cart
 COPY ./internal ./internal
 
-# GOOS is image OS
+# CGO should be enabled if the codes use C library. GOOS is image OS
 RUN CGO_ENABLED=0 GOOS=linux go build -o build ./cmd/cart
 
 # Use scratch for production / only executing binary file
@@ -22,6 +22,7 @@ FROM scratch
 
 WORKDIR /app
 
+# Copy resulted built app from previous stage
 COPY --from=builder /app/build ./
 
 # If using cmd with executable file as its parameter, means cmd becomes executor of the file (no need entrypoint).
