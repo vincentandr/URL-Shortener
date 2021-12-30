@@ -129,11 +129,15 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
-	client, err:= mongodb.NewDb(ctx)
+	client, err:= mongodb.NewDb(ctx, os.Getenv("MONGODB_CATALOG_DB_NAME"))
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer client.Close()
+	defer func(){
+		if err = client.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	err = client.Conn.Ping(context.Background(), nil)
 	if err != nil {
@@ -182,7 +186,7 @@ func main() {
 	// gRPC
 	lis, err := net.Listen("tcp", os.Getenv("GRPC_CATALOG_PORT"))
 	if err != nil {
-		log.Panicf("failed to listen: %v", err)
+		fmt.Printf("failed to listen: %v\n", err)
 	}
 	
 	s := grpc.NewServer()
@@ -190,8 +194,6 @@ func main() {
 
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
-		log.Panicf("failed to serve: %v", err)
+		fmt.Printf("failed to serve: %v\n", err)
 	}
-
-	
 }

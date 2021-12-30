@@ -218,7 +218,11 @@ func main() {
 
     // Init Redis db
 	rdb := rds.NewDb()
-	defer rdb.Close()
+	defer func(){
+		if err = rdb.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	// Database actions
 	action = db.NewAction(rdb.Conn)
@@ -257,11 +261,11 @@ func main() {
 	
 	catalogRpc, err := catalogGrpc.NewGrpcClient(ctx)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	defer func(){
 		if err = catalogRpc.Close(); err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 	}()
 
@@ -270,11 +274,11 @@ func main() {
 
 	paymentRpc, err := paymentGrpc.NewGrpcClient(ctx)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	defer func(){
 		if err = paymentRpc.Close(); err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 	}()
 
@@ -283,7 +287,7 @@ func main() {
 
 	lis, err := net.Listen("tcp", os.Getenv("GRPC_CART_PORT"))
 	if err != nil {
-		log.Panicf("failed to listen: %v", err)
+		fmt.Printf("failed to listen: %v\n", err)
 	}
 	
 	s := grpc.NewServer()
@@ -291,6 +295,6 @@ func main() {
 
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
-		log.Panicf("failed to serve: %v", err)
+		fmt.Printf("failed to serve: %v\n", err)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -16,20 +17,11 @@ import (
 	paymentGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/payment"
 )
 
-const (
-	port = ":3000"
-	path = ""
-)
-
 func main() {
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Printf("failed to load environment variables: %v\n", err)
 	}
-	
-	fmt.Println("Server starting at port " + port)
-
-	r := routes.NewRouter()
 
 	// RPC
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
@@ -37,11 +29,11 @@ func main() {
 
 	catalogRpc, err := catalogGrpc.NewGrpcClient(ctx)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	defer func(){
 		if err = catalogRpc.Close(); err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 	}()
 
@@ -50,11 +42,11 @@ func main() {
 	
 	cartRpc, err := cartGrpc.NewGrpcClient(ctx)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	defer func(){
 		if err = cartRpc.Close(); err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 	}()
 
@@ -63,17 +55,23 @@ func main() {
 
 	paymentRpc, err := paymentGrpc.NewGrpcClient(ctx)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	defer func(){
 		if err = paymentRpc.Close(); err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 	}()
 
 	catalogHandlers.Client = catalogRpc.Client
 	cartHandlers.Client = cartRpc.Client
 	paymentHandlers.Client = paymentRpc.Client
+
+	r := routes.NewRouter()
+	
+	port := os.Getenv("WEB_SERVER_PORT")
+
+	fmt.Println("Server starting at port " + port)
 
 	http.ListenAndServe(port, r)
 }

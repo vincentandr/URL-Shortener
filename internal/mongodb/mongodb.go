@@ -14,7 +14,7 @@ type Mongo struct {
 	Db *mongo.Database
 }
 
-func NewDb(ctx context.Context) (*Mongo, error){
+func NewDb(ctx context.Context, database string) (*Mongo, error){
 	// User:pass@(addr:port)/database_name
 	conn, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 	if err != nil{
@@ -22,7 +22,7 @@ func NewDb(ctx context.Context) (*Mongo, error){
 	}
 	
 	// Create database
-	db := conn.Database(os.Getenv("MONGODB_CATALOG_DB_NAME"))
+	db := conn.Database(database)
 
 	return &Mongo{
 		Conn: conn,
@@ -30,10 +30,11 @@ func NewDb(ctx context.Context) (*Mongo, error){
 	}, nil
 }
 
-func (m *Mongo) Close() {
+func (m *Mongo) Close() error {
 	// Defer close connection
 	if err := m.Conn.Disconnect(context.Background()); err != nil{
-		fmt.Print("failed to disconnect db connection: ")
-		panic(err)
+		return fmt.Errorf("failed to disconnect db connection: ")
 	}
+
+	return nil
 }

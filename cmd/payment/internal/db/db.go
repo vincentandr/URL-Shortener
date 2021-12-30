@@ -36,6 +36,8 @@ func NewAction(conn *mongodb.Mongo) (*Action, error) {
 		return nil, fmt.Errorf("failed to create index: %v", err)
 	}
 
+	fmt.Println(paymentCollection.Database().Name())
+
     return &Action{Conn: conn.Conn, Db: conn.Db, Collection: paymentCollection}, nil
 }
 
