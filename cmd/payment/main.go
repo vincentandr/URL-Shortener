@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	db "github.com/vincentandr/shopping-microservice/cmd/payment/internal/db"
 	rmqPayment "github.com/vincentandr/shopping-microservice/cmd/payment/internal/pubsub"
+	"github.com/vincentandr/shopping-microservice/internal/model"
 	"github.com/vincentandr/shopping-microservice/internal/mongodb"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/payment"
 	rbmq "github.com/vincentandr/shopping-microservice/internal/rabbitmq"
@@ -25,6 +26,46 @@ var (
 
 type Server struct {
 	pb.UnimplementedPaymentServiceServer
+}
+
+func (s *Server) GetOrders(ctx context.Context, in *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+	// Get all orders from db
+	cursor, err := action.GetOrders(ctx, in.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	orders := pb.GetOrdersResponse{}
+	
+	res := model.Order{}
+
+	for cursor.Next(ctx) {
+		// Convert document to above struct
+		err := cursor.Decode(&res)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode document: %v", err)
+		}
+
+		var items []*pb.ItemResponse
+
+		for _, item := range res.Items {
+			var temp pb.ItemResponse
+			
+			// Convert model.Product to pb.ItemResponse
+			temp.ProductId = item.Product_id.Hex()
+			temp.Name = item.Name
+			temp.Price = item.Price
+			temp.Qty = int32(item.Qty)
+
+			items = append(items, &temp)
+		}
+
+		order := &pb.GetOrderResponse{OrderId: res.Order_id.Hex(), UserId: res.User_id, Items: items, Status: res.Status}
+
+		orders.Orders = append(orders.Orders, order)
+	}
+	
+	return &orders, nil
 }
 
 func (s *Server) PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
@@ -43,13 +84,19 @@ func (s *Server) MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.Pa
 	if err != nil{
 		return nil, fmt.Errorf("failed to convert from hex to objectID: %v", err)
 	}
-	order, err := action.GetOrder(ctx, orderId)
+	order, err := action.GetItemsFromOrder(ctx, orderId)
 	if err != nil{
 		return nil, err
 	}
 
 	// Fire event to product catalog reducing qty and to cart emptying user cart
 	err = rmqPayment.PaymentSuccessfulEventPublish(rmqClient.Channel, order)
+	if err != nil {
+		return nil, err
+	}
+
+	// Change order status
+	err = action.MakePayment(ctx, orderId)
 	if err != nil {
 		return nil, err
 	}

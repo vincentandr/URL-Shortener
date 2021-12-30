@@ -33,7 +33,7 @@ func (s *Server) GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetP
 		return nil, err
 	}
 
-	var products pb.GetProductsResponse
+	products := pb.GetProductsResponse{}
 
 	// Must have capital letter and bson tag to be able to decode properly
 	res := model.Product{}
@@ -71,7 +71,7 @@ func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRe
 		return nil, err
 	}
 
-	var products pb.GetProductsByIdsResponse
+	products := pb.GetProductsByIdsResponse{}
 
 	// Must have capital letter and bson tag to be able to decode properly
 	res := model.Product{}
@@ -98,7 +98,7 @@ func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByName
 		return nil, err
 	}
 
-	var products pb.GetProductsResponse
+	products := pb.GetProductsResponse{}
 
 	// Must have capital letter and bson tag to be able to decode properly
 	res := model.Product{}

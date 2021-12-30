@@ -14,6 +14,26 @@ var (
 	Client pb.PaymentServiceClient
 )
 
+func GetOrders(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
+	defer cancel()
+
+	args := mux.Vars(r)
+
+	orders, err := Client.GetOrders(ctx, &pb.GetOrdersRequest{UserId: args["userId"]})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(orders); err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func MakePayment(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()

@@ -195,7 +195,7 @@ func GetMapKeys(hm map[string]string) ([]string, error) {
 }
 
 func AppendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map[string]string) (*pb.ItemsResponse, error){
-	var items pb.ItemsResponse
+	items := pb.ItemsResponse{}
 
 	for _, prod := range catalogRes.Products {
 		qty, err := strconv.Atoi(hm[prod.ProductId])

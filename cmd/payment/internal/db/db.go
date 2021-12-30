@@ -36,12 +36,24 @@ func NewAction(conn *mongodb.Mongo) (*Action, error) {
 		return nil, fmt.Errorf("failed to create index: %v", err)
 	}
 
-	fmt.Println(paymentCollection.Database().Name())
-
     return &Action{Conn: conn.Conn, Db: conn.Db, Collection: paymentCollection}, nil
 }
 
-func (a *Action) GetOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder, error) {
+func (a *Action) GetOrders(ctx context.Context, userId string) (*mongo.Cursor, error) {
+	filter := bson.D{}
+	if userId != "" {
+		filter = bson.D{{Key: "user_id", Value: userId}}
+	}
+
+	res, err := a.Collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all orders: %v", err)
+	}
+
+	return res, nil
+}
+
+func (a *Action) GetItemsFromOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder, error) {
 	var order model.UserOrder
 
 	projection := bson.D{
@@ -112,6 +124,11 @@ func (a *Action) Checkout(ctx context.Context, userId string, items []*pb.ItemRe
 }
 
 // Change status to paid
-func (a *Action) MakePayment(ctx context.Context, orderId string) (error){
+func (a *Action) MakePayment(ctx context.Context, orderId primitive.ObjectID) (error){
+	_, err := a.Collection.UpdateOne(ctx, bson.M{"_id":orderId}, bson.M{"$set": bson.M{"status":"paid"}})
+	if err != nil {
+		return fmt.Errorf("failed to change order status: %v", err)
+	}
+
 	return nil
 }

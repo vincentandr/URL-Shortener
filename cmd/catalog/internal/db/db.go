@@ -103,7 +103,6 @@ func (a *Action) GetProductsByName(ctx context.Context, name string) (*mongo.Cur
 }
 
 func (a *Action) UpdateProducts(ctx context.Context, items []model.Product) (error){
-	
 	var operations []mongo.WriteModel
 
 	for _, item := range items {

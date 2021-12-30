@@ -33,5 +33,7 @@ func (r *Router) routes() {
 	r.HandleFunc("/cart/checkout/{userId}", cartHandlers.Checkout).Methods("GET")
 
 	// Payment
+	r.HandleFunc("/payment", paymentHandlers.GetOrders).Methods("GET")
+	r.HandleFunc("/payment/{userId}", paymentHandlers.GetOrders).Methods("GET")
 	r.HandleFunc("/payment/{orderId}", paymentHandlers.MakePayment).Methods("PUT")
 }

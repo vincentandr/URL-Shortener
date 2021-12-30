@@ -11,11 +11,18 @@ service PaymentService {
 }
 
 message GetOrdersRequest {
+    string user_id = 1;
+}
 
+message GetOrderResponse {
+    string order_id = 1;
+    string user_id = 2;
+    repeated ItemResponse items = 3;
+    string status = 4;
 }
 
 message GetOrdersResponse {
-
+    repeated GetOrderResponse orders = 1;
 }
 
 message ItemResponse {
