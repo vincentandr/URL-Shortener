@@ -29,7 +29,7 @@
 ## Tests
 HTTP handlers test
 ```
-go test ./cmd/bff/
+go test -v ./cmd/bff/internal/handler/...
 ```
 
 Cart helper functions test
