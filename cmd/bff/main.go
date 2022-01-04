@@ -8,14 +8,27 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	cartHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handlers/cart"
-	catalogHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handlers/catalog"
-	paymentHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handlers/payment"
-	"github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/routes"
+	cartHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handler/cart"
+	catalogHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handler/catalog"
+	paymentHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handler/payment"
+	routes "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/route"
 	cartGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/cart"
 	catalogGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/catalog"
 	paymentGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/payment"
 )
+
+type Server struct {
+	Router *routes.Router
+	Port string
+}
+
+func NewHTTPServer(r *routes.Router, port string) *Server{
+	return &Server{Router: r, Port: port}
+}
+
+func (s *Server) HTTPListenAndServe() {
+	http.ListenAndServe(s.Port, s.Router)
+}
 
 func main() {
 	err := godotenv.Load()
@@ -63,15 +76,20 @@ func main() {
 		}
 	}()
 
-	catalogHandlers.Client = catalogRpc.Client
-	cartHandlers.Client = cartRpc.Client
-	paymentHandlers.Client = paymentRpc.Client
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(cartRpc.Client),
+		"catalog": catalogHandlers.NewGrpcClient(catalogRpc.Client),
+		"payment": paymentHandlers.NewGrpcClient(paymentRpc.Client),
+	}
 
-	r := routes.NewRouter()
+	// Create router
+	r := routes.NewRouter(handlerMap)
 	
-	port := os.Getenv("WEB_SERVER_PORT")
+	// Create server
+	srv := NewHTTPServer(r, os.Getenv("WEB_SERVER_PORT"))
 
-	fmt.Println("Server starting at port " + port)
+	fmt.Println("Server starting at port " + srv.Port)
 
-	http.ListenAndServe(port, r)
+	srv.HTTPListenAndServe()
 }

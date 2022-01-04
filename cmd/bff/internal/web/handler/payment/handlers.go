@@ -7,20 +7,29 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	intf "github.com/vincentandr/shopping-microservice/cmd/bff/internal/interface/payment"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/payment"
 )
+
+type GrpcClient struct {
+	Client intf.IPaymentGrpcClient
+}
+
+func NewGrpcClient(client intf.IPaymentGrpcClient) *GrpcClient {
+	return &GrpcClient{Client: client}
+}
 
 var (
 	Client pb.PaymentServiceClient
 )
 
-func GetOrders(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) GetOrders(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	args := mux.Vars(r)
 
-	orders, err := Client.GetOrders(ctx, &pb.GetOrdersRequest{UserId: args["userId"]})
+	orders, err := c.Client.Grpc_GetOrders(ctx, &pb.GetOrdersRequest{UserId: args["userId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,13 +43,13 @@ func GetOrders(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func MakePayment(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) MakePayment(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	args := mux.Vars(r)
 
-	items, err := Client.MakePayment(ctx, &pb.PaymentRequest{OrderId: args["orderId"]})
+	items, err := c.Client.Grpc_MakePayment(ctx, &pb.PaymentRequest{OrderId: args["orderId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

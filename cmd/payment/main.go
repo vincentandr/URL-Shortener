@@ -19,18 +19,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	rmqClient *rbmq.Rabbitmq
-	action *db.Action
-)
-
 type Server struct {
 	pb.UnimplementedPaymentServiceServer
+	dbAction *db.Action
+	rmqClient *rbmq.Rabbitmq
 }
 
-func (s *Server) GetOrders(ctx context.Context, in *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+func (s *Server) Grpc_GetOrders(ctx context.Context, in *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
 	// Get all orders from db
-	cursor, err := action.GetOrders(ctx, in.UserId)
+	cursor, err := s.dbAction.GetOrders(ctx, in.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -68,9 +65,9 @@ func (s *Server) GetOrders(ctx context.Context, in *pb.GetOrdersRequest) (*pb.Ge
 	return &orders, nil
 }
 
-func (s *Server) PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
+func (s *Server) Grpc_PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
 	// Change order status to draft
-	orderId, err := action.Checkout(ctx, in.UserId, in.Items)
+	orderId, err := s.dbAction.Checkout(ctx, in.UserId, in.Items)
 	if err != nil {
 		return nil, err
 	}
@@ -78,25 +75,25 @@ func (s *Server) PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*
 	return &pb.CheckoutResponse{OrderId: orderId}, nil
 }
 
-func (s *Server) MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.PaymentResponse, error) {
+func (s *Server) Grpc_MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.PaymentResponse, error) {
 	// Get order document
 	orderId, err := primitive.ObjectIDFromHex(in.OrderId)
 	if err != nil{
 		return nil, fmt.Errorf("failed to convert from hex to objectID: %v", err)
 	}
-	order, err := action.GetItemsFromOrder(ctx, orderId)
+	order, err := s.dbAction.GetItemsFromOrder(ctx, orderId)
 	if err != nil{
 		return nil, err
 	}
 
 	// Fire event to product catalog reducing qty and to cart emptying user cart
-	err = rmqPayment.PaymentSuccessfulEventPublish(rmqClient.Channel, order)
+	err = rmqPayment.PaymentSuccessfulEventPublish(s.rmqClient.Channel, order)
 	if err != nil {
 		return nil, err
 	}
 
 	// Change order status
-	err = action.MakePayment(ctx, orderId)
+	err = s.dbAction.MakePayment(ctx, orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +126,18 @@ func main() {
 		fmt.Println(err)
 	}
 
-	action, err = db.NewAction(client)
+	action, err := db.NewAction(client)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = action.InitCollection(context.Background())
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	// RabbitMQ client
-	rmqClient, err = rbmq.NewRabbitMQ()
+	rmqClient, err := rbmq.NewRabbitMQ()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -148,6 +150,9 @@ func main() {
 		}
 	}()
 
+	// Initialize server
+	srv := &Server{dbAction: action, rmqClient: rmqClient}
+
 	// gRPC
 	lis, err := net.Listen("tcp", os.Getenv("GRPC_PAYMENT_PORT"))
 	if err != nil {
@@ -155,7 +160,7 @@ func main() {
 	}
 	
 	s := grpc.NewServer()
-	pb.RegisterPaymentServiceServer(s, &Server{})
+	pb.RegisterPaymentServiceServer(s, srv)
 
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {

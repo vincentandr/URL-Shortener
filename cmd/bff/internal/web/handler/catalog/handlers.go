@@ -6,19 +6,24 @@ import (
 	"net/http"
 	"time"
 
+	intf "github.com/vincentandr/shopping-microservice/cmd/bff/internal/interface/catalog"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/catalog"
 )
 
-var (
-	Client pb.CatalogServiceClient
-)
+type GrpcClient struct {
+	Client intf.ICatalogGrpcClient
+}
 
-func GetProducts(w http.ResponseWriter, r *http.Request) {
+func NewGrpcClient(client intf.ICatalogGrpcClient) *GrpcClient {
+	return &GrpcClient{Client: client}
+}
+
+func (c *GrpcClient) GetProducts(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	// Call function in catalog_client
-	products, err := Client.GetProducts(ctx, &pb.EmptyRequest{})
+	products, err := c.Client.Grpc_GetProducts(ctx, &pb.EmptyRequest{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -33,13 +38,13 @@ func GetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetProductsByName(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) GetProductsByName(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	name := r.URL.Query().Get("name")
 
-	products, err := Client.GetProductsByName(ctx, &pb.GetProductsByNameRequest{Name: name})
+	products, err := c.Client.Grpc_GetProductsByName(ctx, &pb.GetProductsByNameRequest{Name: name})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

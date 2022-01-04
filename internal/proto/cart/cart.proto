@@ -5,11 +5,11 @@ package cartpb;
 option go_package = "github.com/vincentandr/shopping-microservice/src/cart/cartpb";
 
 service CartService {
-    rpc GetCartItems(GetCartItemsRequest) returns (ItemsResponse) {}
-    rpc AddOrUpdateCart(AddOrUpdateCartRequest) returns (ItemsResponse) {}
-    rpc RemoveItemFromCart(RemoveItemFromCartRequest) returns (ItemsResponse) {}
-    rpc RemoveAllCartItems(RemoveAllCartItemsRequest) returns (ItemsResponse) {}
-    rpc Checkout(CheckoutRequest) returns (CheckoutResponse) {}
+    rpc Grpc_GetCartItems(GetCartItemsRequest) returns (ItemsResponse) {}
+    rpc Grpc_AddOrUpdateCart(AddOrUpdateCartRequest) returns (ItemsResponse) {}
+    rpc Grpc_RemoveItemFromCart(RemoveItemFromCartRequest) returns (ItemsResponse) {}
+    rpc Grpc_RemoveAllCartItems(RemoveAllCartItemsRequest) returns (ItemsResponse) {}
+    rpc Grpc_Checkout(CheckoutRequest) returns (CheckoutResponse) {}
 }
 
 message CheckoutRequest {

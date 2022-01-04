@@ -18,9 +18,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentServiceClient interface {
-	GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error)
-	PaymentCheckout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error)
-	MakePayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
+	Grpc_GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error)
+	Grpc_PaymentCheckout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error)
+	Grpc_MakePayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
 }
 
 type paymentServiceClient struct {
@@ -31,27 +31,27 @@ func NewPaymentServiceClient(cc grpc.ClientConnInterface) PaymentServiceClient {
 	return &paymentServiceClient{cc}
 }
 
-func (c *paymentServiceClient) GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error) {
+func (c *paymentServiceClient) Grpc_GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error) {
 	out := new(GetOrdersResponse)
-	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/GetOrders", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/Grpc_GetOrders", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *paymentServiceClient) PaymentCheckout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error) {
+func (c *paymentServiceClient) Grpc_PaymentCheckout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error) {
 	out := new(CheckoutResponse)
-	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/PaymentCheckout", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/Grpc_PaymentCheckout", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *paymentServiceClient) MakePayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error) {
+func (c *paymentServiceClient) Grpc_MakePayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error) {
 	out := new(PaymentResponse)
-	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/MakePayment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/Grpc_MakePayment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func (c *paymentServiceClient) MakePayment(ctx context.Context, in *PaymentReque
 // All implementations must embed UnimplementedPaymentServiceServer
 // for forward compatibility
 type PaymentServiceServer interface {
-	GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error)
-	PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error)
-	MakePayment(context.Context, *PaymentRequest) (*PaymentResponse, error)
+	Grpc_GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error)
+	Grpc_PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error)
+	Grpc_MakePayment(context.Context, *PaymentRequest) (*PaymentResponse, error)
 	mustEmbedUnimplementedPaymentServiceServer()
 }
 
@@ -72,14 +72,14 @@ type PaymentServiceServer interface {
 type UnimplementedPaymentServiceServer struct {
 }
 
-func (UnimplementedPaymentServiceServer) GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOrders not implemented")
+func (UnimplementedPaymentServiceServer) Grpc_GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Grpc_GetOrders not implemented")
 }
-func (UnimplementedPaymentServiceServer) PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PaymentCheckout not implemented")
+func (UnimplementedPaymentServiceServer) Grpc_PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Grpc_PaymentCheckout not implemented")
 }
-func (UnimplementedPaymentServiceServer) MakePayment(context.Context, *PaymentRequest) (*PaymentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MakePayment not implemented")
+func (UnimplementedPaymentServiceServer) Grpc_MakePayment(context.Context, *PaymentRequest) (*PaymentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Grpc_MakePayment not implemented")
 }
 func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
 
@@ -94,56 +94,56 @@ func RegisterPaymentServiceServer(s grpc.ServiceRegistrar, srv PaymentServiceSer
 	s.RegisterService(&PaymentService_ServiceDesc, srv)
 }
 
-func _PaymentService_GetOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PaymentService_Grpc_GetOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetOrdersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PaymentServiceServer).GetOrders(ctx, in)
+		return srv.(PaymentServiceServer).Grpc_GetOrders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/paymentpb.PaymentService/GetOrders",
+		FullMethod: "/paymentpb.PaymentService/Grpc_GetOrders",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).GetOrders(ctx, req.(*GetOrdersRequest))
+		return srv.(PaymentServiceServer).Grpc_GetOrders(ctx, req.(*GetOrdersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PaymentService_PaymentCheckout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PaymentService_Grpc_PaymentCheckout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckoutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PaymentServiceServer).PaymentCheckout(ctx, in)
+		return srv.(PaymentServiceServer).Grpc_PaymentCheckout(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/paymentpb.PaymentService/PaymentCheckout",
+		FullMethod: "/paymentpb.PaymentService/Grpc_PaymentCheckout",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).PaymentCheckout(ctx, req.(*CheckoutRequest))
+		return srv.(PaymentServiceServer).Grpc_PaymentCheckout(ctx, req.(*CheckoutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PaymentService_MakePayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PaymentService_Grpc_MakePayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PaymentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PaymentServiceServer).MakePayment(ctx, in)
+		return srv.(PaymentServiceServer).Grpc_MakePayment(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/paymentpb.PaymentService/MakePayment",
+		FullMethod: "/paymentpb.PaymentService/Grpc_MakePayment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).MakePayment(ctx, req.(*PaymentRequest))
+		return srv.(PaymentServiceServer).Grpc_MakePayment(ctx, req.(*PaymentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -156,16 +156,16 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PaymentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetOrders",
-			Handler:    _PaymentService_GetOrders_Handler,
+			MethodName: "Grpc_GetOrders",
+			Handler:    _PaymentService_Grpc_GetOrders_Handler,
 		},
 		{
-			MethodName: "PaymentCheckout",
-			Handler:    _PaymentService_PaymentCheckout_Handler,
+			MethodName: "Grpc_PaymentCheckout",
+			Handler:    _PaymentService_Grpc_PaymentCheckout_Handler,
 		},
 		{
-			MethodName: "MakePayment",
-			Handler:    _PaymentService_MakePayment_Handler,
+			MethodName: "Grpc_MakePayment",
+			Handler:    _PaymentService_Grpc_MakePayment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

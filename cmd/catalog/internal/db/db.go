@@ -21,8 +21,25 @@ type Action struct {
 func NewAction(conn *mongodb.Mongo) (*Action, error) {
 	catalogCollection := conn.Db.Collection("catalogs")
 
+    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: catalogCollection}, nil
+}
+
+func (a *Action) InitCollection(ctx context.Context) error {
+	err := CreateIndex(ctx, a)
+	if err != nil {
+		return err
+	}
+	err = SeedCollection(ctx, a)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateIndex(ctx context.Context, a *Action) error {
 	// Create index
-	_, err := catalogCollection.Indexes().CreateOne(
+	_, err := a.Collection.Indexes().CreateOne(
         context.Background(),
         mongo.IndexModel{
                 Keys: bson.D{{
@@ -31,13 +48,13 @@ func NewAction(conn *mongodb.Mongo) (*Action, error) {
         },
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create index: %v", err)
+		return fmt.Errorf("failed to create index: %v", err)
 	}
 
-    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: catalogCollection}, nil
+	return nil
 }
 
-func (a *Action) SeedCollection(ctx context.Context) error {
+func SeedCollection(ctx context.Context, a *Action) error {
 	count, err := a.Collection.CountDocuments(ctx, bson.D{})
 	if err == nil && count == 0 {
 		docs := []interface{}{

@@ -8,22 +8,28 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	intf "github.com/vincentandr/shopping-microservice/cmd/bff/internal/interface/cart"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/cart"
 )
 
-var (
-	Client pb.CartServiceClient
-)
+// pb.CartServiceClient pb "github.com/vincentandr/shopping-microservice/internal/proto/cart"
+
+type GrpcClient struct {
+	Client intf.ICartGrpcClient
+}
+
+func NewGrpcClient(client intf.ICartGrpcClient) *GrpcClient {
+	return &GrpcClient{Client: client}
+}
 
 // Cart service
-
-func GetCartItems(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) GetCartItems(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	args := mux.Vars(r)
 
-	items, err := Client.GetCartItems(ctx, &pb.GetCartItemsRequest{UserId: args["userId"]})
+	items, err := c.Client.Grpc_GetCartItems(ctx, &pb.GetCartItemsRequest{UserId: args["userId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -37,7 +43,7 @@ func GetCartItems(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AddOrUpdateCartQty(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) AddOrUpdateCartQty(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
@@ -49,7 +55,7 @@ func AddOrUpdateCartQty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	items, err := Client.AddOrUpdateCart(ctx, &pb.AddOrUpdateCartRequest{UserId: args["userId"], ProductId: args["productId"], NewQty: int32(qty)})
+	items, err := c.Client.Grpc_AddOrUpdateCart(ctx, &pb.AddOrUpdateCartRequest{UserId: args["userId"], ProductId: args["productId"], NewQty: int32(qty)})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -63,13 +69,13 @@ func AddOrUpdateCartQty(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RemoveCartItem(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) RemoveCartItem(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	args := mux.Vars(r)
 
-	items, err := Client.RemoveItemFromCart(ctx, &pb.RemoveItemFromCartRequest{UserId: args["userId"], ProductId: args["productId"]})
+	items, err := c.Client.Grpc_RemoveItemFromCart(ctx, &pb.RemoveItemFromCartRequest{UserId: args["userId"], ProductId: args["productId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -83,13 +89,13 @@ func RemoveCartItem(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RemoveAllCartItems(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) RemoveAllCartItems(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	args := mux.Vars(r)
 
-	items, err := Client.RemoveAllCartItems(ctx, &pb.RemoveAllCartItemsRequest{UserId: args["userId"]})
+	items, err := c.Client.Grpc_RemoveAllCartItems(ctx, &pb.RemoveAllCartItemsRequest{UserId: args["userId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -103,13 +109,13 @@ func RemoveAllCartItems(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Checkout(w http.ResponseWriter, r *http.Request) {
+func (c *GrpcClient) Checkout(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
 	args := mux.Vars(r)
 
-	orderId, err := Client.Checkout(ctx, &pb.CheckoutRequest{UserId: args["userId"]})
+	orderId, err := c.Client.Grpc_Checkout(ctx, &pb.CheckoutRequest{UserId: args["userId"]})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

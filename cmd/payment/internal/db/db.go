@@ -23,8 +23,21 @@ type Action struct {
 func NewAction(conn *mongodb.Mongo) (*Action, error) {
 	paymentCollection := conn.Db.Collection("orders")
 
+    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: paymentCollection}, nil
+}
+
+func (a *Action) InitCollection(ctx context.Context) error {
+	err := CreateIndex(ctx, a)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateIndex(ctx context.Context, a *Action) error {
 	// Create index
-	_, err := paymentCollection.Indexes().CreateOne(
+	_, err := a.Collection.Indexes().CreateOne(
         context.Background(),
         mongo.IndexModel{
                 Keys: bson.D{
@@ -33,10 +46,10 @@ func NewAction(conn *mongodb.Mongo) (*Action, error) {
         },
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create index: %v", err)
+		return fmt.Errorf("failed to create index: %v", err)
 	}
 
-    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: paymentCollection}, nil
+	return nil
 }
 
 func (a *Action) GetOrders(ctx context.Context, userId string) (*mongo.Cursor, error) {

@@ -19,16 +19,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	action *db.Action
-)
-
 type Server struct {
 	pb.UnimplementedCatalogServiceServer
+	dbAction *db.Action
+	rmqConsumer *rmqCatalog.RbmqListener
 }
 
-func (s *Server) GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetProductsResponse, error) {
-	cursor, err := action.GetProducts(ctx)
+func (s *Server) Grpc_GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetProductsResponse, error) {
+	cursor, err := s.dbAction.GetProducts(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +51,7 @@ func (s *Server) GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetP
 	return &products, nil
 }
 
-func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRequest) (*pb.GetProductsByIdsResponse, error) {
+func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRequest) (*pb.GetProductsByIdsResponse, error) {
 	// Convert string to ObjectID for collection filter
 	productIds := make([]primitive.ObjectID, len(in.ProductIds))
 
@@ -66,7 +64,7 @@ func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRe
 		productIds[i] = objectId
 	}
 
-	cursor, err := action.GetProductsByIds(ctx, productIds)
+	cursor, err := s.dbAction.GetProductsByIds(ctx, productIds)
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +90,8 @@ func (s *Server) GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRe
 	return &products, nil
 }
 
-func (s *Server) GetProductsByName(ctx context.Context, in *pb.GetProductsByNameRequest) (*pb.GetProductsResponse, error) {
-	cursor, err := action.GetProductsByName(ctx, in.Name)
+func (s *Server) Grpc_GetProductsByName(ctx context.Context, in *pb.GetProductsByNameRequest) (*pb.GetProductsResponse, error) {
+	cursor, err := s.dbAction.GetProductsByName(ctx, in.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -144,13 +142,13 @@ func main() {
 		fmt.Println(err)
 	}
 
-	action, err = db.NewAction(client)
+	action, err := db.NewAction(client)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// Seed collection
-	err = action.SeedCollection(context.Background())
+	// Seed and create index for collection
+	err = action.InitCollection(context.Background())
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -180,8 +178,11 @@ func main() {
 		}
 	}()
 
+	// Initialize server
+	srv := &Server{dbAction: action, rmqConsumer: consumer}
+
 	// Listen to rabbitmq events and handle them
-	consumer.EventHandler(action)
+	srv.rmqConsumer.EventHandler(action)
 
 	// gRPC
 	lis, err := net.Listen("tcp", os.Getenv("GRPC_CATALOG_PORT"))
@@ -190,7 +191,7 @@ func main() {
 	}
 	
 	s := grpc.NewServer()
-	pb.RegisterCatalogServiceServer(s, &Server{})
+	pb.RegisterCatalogServiceServer(s, srv)
 
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {

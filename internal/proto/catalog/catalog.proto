@@ -5,9 +5,9 @@ package catalogpb;
 option go_package = "github.com/vincentandr/shopping-microservice/src/catalog/catalogpb";
 
 service CatalogService{
-    rpc GetProducts(EmptyRequest) returns (GetProductsResponse) {}
-    rpc GetProductsByIds(GetProductsByIdsRequest) returns (GetProductsByIdsResponse) {}
-    rpc GetProductsByName(GetProductsByNameRequest) returns (GetProductsResponse) {}
+    rpc Grpc_GetProducts(EmptyRequest) returns (GetProductsResponse) {}
+    rpc Grpc_GetProductsByIds(GetProductsByIdsRequest) returns (GetProductsByIdsResponse) {}
+    rpc Grpc_GetProductsByName(GetProductsByNameRequest) returns (GetProductsResponse) {}
 }
 
 message EmptyRequest {}

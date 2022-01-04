@@ -22,19 +22,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	catalogClient catalogpb.CatalogServiceClient
-	paymentClient paymentpb.PaymentServiceClient
-	action *db.Action
-)
-
 type Server struct {
 	pb.UnimplementedCartServiceServer
+	catalogClient catalogpb.CatalogServiceClient
+	paymentClient paymentpb.PaymentServiceClient
+	dbAction *db.Action
+	rmqConsumer *rmqCart.RbmqListener
 }
 
-func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (*pb.ItemsResponse, error) {
+func (s *Server) Grpc_GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (*pb.ItemsResponse, error) {
 	// Get product ids and its quantity in cart by userId
-	res, err := action.GetCartItems(ctx, in.UserId)
+	res, err := s.dbAction.GetCartItems(ctx, in.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +43,10 @@ func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (
 	}
 
 	// Get Product ID Keys from map
-	ids, err := GetMapKeys(res)
-	if err != nil{
-		return nil, err
-	}
+	ids := GetMapKeys(res)
 
 	// RPC call catalog server to get cart products' names
-	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
+	products, err := s.catalogClient.Grpc_GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -65,8 +60,8 @@ func (s *Server) GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (
 	return items, nil
 }
 
-func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequest) (*pb.ItemsResponse, error) {
-	res, err := action.AddOrUpdateCart(ctx, in.UserId, in.ProductId, int(in.NewQty))
+func (s *Server) Grpc_AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequest) (*pb.ItemsResponse, error) {
+	res, err := s.dbAction.AddOrUpdateCart(ctx, in.UserId, in.ProductId, int(in.NewQty))
 	if err != nil{
 		return nil, err
 	}
@@ -77,13 +72,10 @@ func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequ
 	}
 
 	// Get Product ID Keys from map
-	ids, err := GetMapKeys(res)
-	if err != nil{
-		return nil, err
-	}
+	ids := GetMapKeys(res)
 
 	// RPC call catalog server to get cart products' names
-	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
+	products, err := s.catalogClient.Grpc_GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -97,8 +89,8 @@ func (s *Server) AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequ
     return items, nil
 }
 
-func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCartRequest) (*pb.ItemsResponse, error) {
-	res, err := action.RemoveItemFromCart(ctx, in.UserId, in.ProductId)
+func (s *Server) Grpc_RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCartRequest) (*pb.ItemsResponse, error) {
+	res, err := s.dbAction.RemoveItemFromCart(ctx, in.UserId, in.ProductId)
 	if err != nil{
 		return nil, err
 	}
@@ -109,13 +101,10 @@ func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCa
 	}
 
     // Get Product ID Keys from map
-	ids, err := GetMapKeys(res)
-	if err != nil{
-		return nil, err
-	}
+	ids := GetMapKeys(res)
 
 	// RPC call catalog server to get cart products' names
-	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
+	products, err := s.catalogClient.Grpc_GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -129,8 +118,8 @@ func (s *Server) RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCa
     return items, nil
 }
 
-func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartItemsRequest) (*pb.ItemsResponse, error) {
-	res, err := action.RemoveAllCartItems(ctx, in.UserId)
+func (s *Server) Grpc_RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartItemsRequest) (*pb.ItemsResponse, error) {
+	res, err := s.dbAction.RemoveAllCartItems(ctx, in.UserId)
 	if err != nil{
 		return nil, err
 	}
@@ -141,13 +130,10 @@ func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartIte
 	}
 
     // Get Product ID Keys from map
-	ids, err := GetMapKeys(res)
-	if err != nil{
-		return nil, err
-	}
+	ids := GetMapKeys(res)
 
 	// RPC call catalog server to get cart products' names
-	products, err := catalogClient.GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
+	products, err := s.catalogClient.Grpc_GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
 	if err != nil{
 		return nil, err
 	}
@@ -161,9 +147,9 @@ func (s *Server) RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartIte
     return items, nil
 }
 
-func (s *Server) Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
+func (s *Server) Grpc_Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
 	// Get user id's cart items
-	res, err := s.GetCartItems(ctx, &pb.GetCartItemsRequest{UserId: in.UserId})
+	res, err := s.Grpc_GetCartItems(ctx, &pb.GetCartItemsRequest{UserId: in.UserId})
 	if err != nil{
 		return nil, err
 	}
@@ -175,7 +161,7 @@ func (s *Server) Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.Chec
 		itemsForOrder[i] = &paymentpb.ItemResponse{ProductId: item.ProductId, Name: item.Name, Price: item.Price, Qty: item.Qty}
 	}
 
-	response, err := paymentClient.PaymentCheckout(ctx, &paymentpb.CheckoutRequest{UserId: in.UserId, Items: itemsForOrder})
+	response, err := s.paymentClient.Grpc_PaymentCheckout(ctx, &paymentpb.CheckoutRequest{UserId: in.UserId, Items: itemsForOrder})
 	if err != nil{
 		return nil, err
 	}
@@ -183,7 +169,7 @@ func (s *Server) Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.Chec
 	return &pb.CheckoutResponse{OrderId: response.OrderId}, nil
 }
 
-func GetMapKeys(hm map[string]string) ([]string, error) {
+func GetMapKeys(hm map[string]string) ([]string) {
 	ids := make([]string, len(hm))
 	i := 0
 	for k := range hm {
@@ -191,7 +177,7 @@ func GetMapKeys(hm map[string]string) ([]string, error) {
 		i++
 	}
 
-	return ids, nil
+	return ids
 }
 
 func AppendItemToResponse(catalogRes *catalogpb.GetProductsByIdsResponse, hm map[string]string) (*pb.ItemsResponse, error){
@@ -225,7 +211,7 @@ func main() {
 	}()
 
 	// Database actions
-	action = db.NewAction(rdb.Conn)
+	action := db.NewAction(rdb.Conn)
 
 	// RabbitMQ client
 	rmqClient, err := rbmq.NewRabbitMQ()
@@ -251,9 +237,6 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-
-	// Listen to rabbitmq events and handle them
-	consumer.EventHandler(action)
     
     // gRPC
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
@@ -282,8 +265,16 @@ func main() {
 		}
 	}()
 
-	catalogClient = catalogRpc.Client
-	paymentClient = paymentRpc.Client
+	// Initialize server
+	srv := &Server{
+		catalogClient: catalogRpc.Client,
+		paymentClient: paymentRpc.Client,
+		dbAction: action,
+		rmqConsumer: consumer,
+	}
+
+	// Listen to rabbitmq events and handle them
+	srv.rmqConsumer.EventHandler(action)
 
 	lis, err := net.Listen("tcp", os.Getenv("GRPC_CART_PORT"))
 	if err != nil {
@@ -291,7 +282,7 @@ func main() {
 	}
 	
 	s := grpc.NewServer()
-	pb.RegisterCartServiceServer(s, &Server{})
+	pb.RegisterCartServiceServer(s, srv)
 
 	log.Printf("server listening at %v\n", lis.Addr())
 	if err := s.Serve(lis); err != nil {
