@@ -60,7 +60,7 @@ func NewConsumer(r *rbmq.Rabbitmq) (*RbmqListener, error) {
 	return &RbmqListener{Msgs: msgs, Tag: tag}, nil
 }
 
-func (l *RbmqListener) EventHandler(a *db.Action) {
+func (l *RbmqListener) EventHandler(r *db.Repository) {
 	go func(){
 		for msg := range l.Msgs {
 			var order model.UserOrder
@@ -68,7 +68,7 @@ func (l *RbmqListener) EventHandler(a *db.Action) {
 			switch msg.RoutingKey {
 			case "event.payment.success":
 				gob.NewDecoder(bytes.NewReader(msg.Body)).Decode(&order)
-				err := EventPaymentSuccessful(a, order)
+				err := EventPaymentSuccessful(r, order)
 				if err != nil{
 					fmt.Println(err)
 				}
@@ -78,8 +78,8 @@ func (l *RbmqListener) EventHandler(a *db.Action) {
 	}()
 }
 
-func EventPaymentSuccessful(a *db.Action, order model.UserOrder) error {
-	err := a.UpdateProducts(context.Background(), order.Items)
+func EventPaymentSuccessful(r *db.Repository, order model.UserOrder) error {
+	err := r.UpdateProducts(context.Background(), order.Items)
 	if err != nil {
 		return fmt.Errorf("failed to execute remove cart items event payment: %v", err)
 	}

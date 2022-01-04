@@ -21,12 +21,12 @@ import (
 
 type Server struct {
 	pb.UnimplementedCatalogServiceServer
-	dbAction *db.Action
+	repo *db.Repository
 	rmqConsumer *rmqCatalog.RbmqListener
 }
 
 func (s *Server) Grpc_GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb.GetProductsResponse, error) {
-	cursor, err := s.dbAction.GetProducts(ctx)
+	cursor, err := s.repo.GetProducts(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsBy
 		productIds[i] = objectId
 	}
 
-	cursor, err := s.dbAction.GetProductsByIds(ctx, productIds)
+	cursor, err := s.repo.GetProductsByIds(ctx, productIds)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsBy
 }
 
 func (s *Server) Grpc_GetProductsByName(ctx context.Context, in *pb.GetProductsByNameRequest) (*pb.GetProductsResponse, error) {
-	cursor, err := s.dbAction.GetProductsByName(ctx, in.Name)
+	cursor, err := s.repo.GetProductsByName(ctx, in.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	action, err := db.NewAction(client)
+	action, err := db.NewRepository(client)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -179,7 +179,7 @@ func main() {
 	}()
 
 	// Initialize server
-	srv := &Server{dbAction: action, rmqConsumer: consumer}
+	srv := &Server{repo: action, rmqConsumer: consumer}
 
 	// Listen to rabbitmq events and handle them
 	srv.rmqConsumer.EventHandler(action)

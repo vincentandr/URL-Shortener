@@ -12,24 +12,24 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Action struct {
+type Repository struct {
 	Conn *mongo.Client
 	Db *mongo.Database
 	Collection *mongo.Collection
 }
 
-func NewAction(conn *mongodb.Mongo) (*Action, error) {
+func NewRepository(conn *mongodb.Mongo) (*Repository, error) {
 	catalogCollection := conn.Db.Collection("catalogs")
 
-    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: catalogCollection}, nil
+    return &Repository{Conn: conn.Conn, Db: conn.Db, Collection: catalogCollection}, nil
 }
 
-func (a *Action) InitCollection(ctx context.Context) error {
-	err := CreateIndex(ctx, a)
+func (r *Repository) InitCollection(ctx context.Context) error {
+	err := CreateIndex(ctx, r)
 	if err != nil {
 		return err
 	}
-	err = SeedCollection(ctx, a)
+	err = SeedCollection(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -37,9 +37,9 @@ func (a *Action) InitCollection(ctx context.Context) error {
 	return nil
 }
 
-func CreateIndex(ctx context.Context, a *Action) error {
+func CreateIndex(ctx context.Context, r *Repository) error {
 	// Create index
-	_, err := a.Collection.Indexes().CreateOne(
+	_, err := r.Collection.Indexes().CreateOne(
         context.Background(),
         mongo.IndexModel{
                 Keys: bson.D{{
@@ -54,8 +54,8 @@ func CreateIndex(ctx context.Context, a *Action) error {
 	return nil
 }
 
-func SeedCollection(ctx context.Context, a *Action) error {
-	count, err := a.Collection.CountDocuments(ctx, bson.D{})
+func SeedCollection(ctx context.Context, r *Repository) error {
+	count, err := r.Collection.CountDocuments(ctx, bson.D{})
 	if err == nil && count == 0 {
 		docs := []interface{}{
 			bson.D{
@@ -70,7 +70,7 @@ func SeedCollection(ctx context.Context, a *Action) error {
 			},
 		}
 
-		_, err = a.Collection.InsertMany(ctx, docs)
+		_, err = r.Collection.InsertMany(ctx, docs)
 		if err != nil{
 			return fmt.Errorf("failed to seed documents: %v", err)
 		}
@@ -80,8 +80,8 @@ func SeedCollection(ctx context.Context, a *Action) error {
 	return nil
 }
 
-func (a *Action) GetProducts(ctx context.Context) (*mongo.Cursor, error){
-	cursor, err := a.Collection.Find(ctx, bson.D{})
+func (r *Repository) GetProducts(ctx context.Context) (*mongo.Cursor, error){
+	cursor, err := r.Collection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
@@ -89,7 +89,7 @@ func (a *Action) GetProducts(ctx context.Context) (*mongo.Cursor, error){
 	return cursor, nil
 }
 
-func (a *Action) GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cursor, error){
+func (r *Repository) GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cursor, error){
 	// Set what fields to get / select
 	projection := bson.D{
 		{Key:"_id", Value: 1},
@@ -97,7 +97,7 @@ func (a *Action) GetProductsByIds(ctx context.Context, ids []primitive.ObjectID)
 		{Key:"price", Value: 1},
 	}
 
-	cursor, err := a.Collection.Find(
+	cursor, err := r.Collection.Find(
 		ctx, 
 		bson.M{"_id": bson.M{"$in": ids}},
 		options.Find().SetProjection(projection),
@@ -109,9 +109,9 @@ func (a *Action) GetProductsByIds(ctx context.Context, ids []primitive.ObjectID)
 	return cursor, nil
 }
 
-func (a *Action) GetProductsByName(ctx context.Context, name string) (*mongo.Cursor, error){
+func (r *Repository) GetProductsByName(ctx context.Context, name string) (*mongo.Cursor, error){
 	// equal to LIKE %name%
-	cursor, err := a.Collection.Find(ctx, bson.M{"name": primitive.Regex{Pattern: name, Options: ""}})
+	cursor, err := r.Collection.Find(ctx, bson.M{"name": primitive.Regex{Pattern: name, Options: ""}})
 	if err != nil {
 		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)
 	}
@@ -119,7 +119,7 @@ func (a *Action) GetProductsByName(ctx context.Context, name string) (*mongo.Cur
 	return cursor, nil
 }
 
-func (a *Action) UpdateProducts(ctx context.Context, items []model.Product) (error){
+func (r *Repository) UpdateProducts(ctx context.Context, items []model.Product) (error){
 	var operations []mongo.WriteModel
 
 	for _, item := range items {
@@ -139,7 +139,7 @@ func (a *Action) UpdateProducts(ctx context.Context, items []model.Product) (err
 	// Create transaction function
 	callback := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		// Create new update operation for each cart item
-		res, err := a.Collection.BulkWrite(
+		res, err := r.Collection.BulkWrite(
 			sessCtx,
 			operations,
 		)
@@ -154,7 +154,7 @@ func (a *Action) UpdateProducts(ctx context.Context, items []model.Product) (err
 		return nil, nil
 	}
 	// Start a transaction session
-	session, err := a.Conn.StartSession()
+	session, err := r.Conn.StartSession()
 	if err != nil {
 		return err
 	}

@@ -14,20 +14,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Action struct {
+type Repository struct {
 	Conn *mongo.Client
 	Db *mongo.Database
 	Collection *mongo.Collection
 }
 
-func NewAction(conn *mongodb.Mongo) (*Action, error) {
+func NewRepository(conn *mongodb.Mongo) (*Repository, error) {
 	paymentCollection := conn.Db.Collection("orders")
 
-    return &Action{Conn: conn.Conn, Db: conn.Db, Collection: paymentCollection}, nil
+    return &Repository{Conn: conn.Conn, Db: conn.Db, Collection: paymentCollection}, nil
 }
 
-func (a *Action) InitCollection(ctx context.Context) error {
-	err := CreateIndex(ctx, a)
+func (r *Repository) InitCollection(ctx context.Context) error {
+	err := CreateIndex(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -35,9 +35,9 @@ func (a *Action) InitCollection(ctx context.Context) error {
 	return nil
 }
 
-func CreateIndex(ctx context.Context, a *Action) error {
+func CreateIndex(ctx context.Context, r *Repository) error {
 	// Create index
-	_, err := a.Collection.Indexes().CreateOne(
+	_, err := r.Collection.Indexes().CreateOne(
         context.Background(),
         mongo.IndexModel{
                 Keys: bson.D{
@@ -52,13 +52,13 @@ func CreateIndex(ctx context.Context, a *Action) error {
 	return nil
 }
 
-func (a *Action) GetOrders(ctx context.Context, userId string) (*mongo.Cursor, error) {
+func (r *Repository) GetOrders(ctx context.Context, userId string) (*mongo.Cursor, error) {
 	filter := bson.D{}
 	if userId != "" {
 		filter = bson.D{{Key: "user_id", Value: userId}}
 	}
 
-	res, err := a.Collection.Find(ctx, filter)
+	res, err := r.Collection.Find(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all orders: %v", err)
 	}
@@ -66,7 +66,7 @@ func (a *Action) GetOrders(ctx context.Context, userId string) (*mongo.Cursor, e
 	return res, nil
 }
 
-func (a *Action) GetItemsFromOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder, error) {
+func (r *Repository) GetItemsFromOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder, error) {
 	var order model.UserOrder
 
 	projection := bson.D{
@@ -74,7 +74,7 @@ func (a *Action) GetItemsFromOrder(ctx context.Context, orderId primitive.Object
 		{Key:"items", Value: 1},
 	}
 
-	if err := a.Collection.FindOne(ctx, bson.M{"_id":orderId}, options.FindOne().SetProjection(projection)).Decode(&order); err != nil{
+	if err := r.Collection.FindOne(ctx, bson.M{"_id":orderId}, options.FindOne().SetProjection(projection)).Decode(&order); err != nil{
 		return model.UserOrder{}, fmt.Errorf("failed to get order: %v", err)
 	}
 
@@ -82,7 +82,7 @@ func (a *Action) GetItemsFromOrder(ctx context.Context, orderId primitive.Object
 }
 
 // Create order draft
-func (a *Action) Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (string, error){
+func (r *Repository) Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (string, error){
 	var itemsBson []bson.M
 
 	for _, item := range items {
@@ -102,13 +102,13 @@ func (a *Action) Checkout(ctx context.Context, userId string, items []*pb.ItemRe
 	// Create transaction function
 	callback := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		// Delete existing order draft document by userId
-		_, err := a.Collection.DeleteOne(ctx, bson.M{"user_id": userId, "status": "draft"})
+		_, err := r.Collection.DeleteOne(ctx, bson.M{"user_id": userId, "status": "draft"})
 		if err != nil {
 			return nil, fmt.Errorf("deletion of existing order draft failed: %v", err)
 		}
 
 		// Insert order document
-		res, err := a.Collection.InsertOne(ctx, bson.M{
+		res, err := r.Collection.InsertOne(ctx, bson.M{
 			"user_id": userId,
 			"items": itemsBson,
 			"status": "draft",
@@ -120,7 +120,7 @@ func (a *Action) Checkout(ctx context.Context, userId string, items []*pb.ItemRe
 		return res.InsertedID, nil
 	}
 	// Start a transaction session
-	session, err := a.Conn.StartSession()
+	session, err := r.Conn.StartSession()
 	if err != nil {
 		return "", err
 	}
@@ -137,8 +137,8 @@ func (a *Action) Checkout(ctx context.Context, userId string, items []*pb.ItemRe
 }
 
 // Change status to paid
-func (a *Action) MakePayment(ctx context.Context, orderId primitive.ObjectID) (error){
-	_, err := a.Collection.UpdateOne(ctx, bson.M{"_id":orderId}, bson.M{"$set": bson.M{"status":"paid"}})
+func (r *Repository) MakePayment(ctx context.Context, orderId primitive.ObjectID) (error){
+	_, err := r.Collection.UpdateOne(ctx, bson.M{"_id":orderId}, bson.M{"$set": bson.M{"status":"paid"}})
 	if err != nil {
 		return fmt.Errorf("failed to change order status: %v", err)
 	}

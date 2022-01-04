@@ -3,6 +3,7 @@ package catalogHandlers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -95,6 +96,52 @@ func TestGetProducts(t *testing.T) {
 	}
 }
 
+func TestGetProductsWithError(t *testing.T) {
+	input := &catalogPb.EmptyRequest{}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodGet
+	mockMethod := "Grpc_GetProducts"
+	route := "/products"
+
+	// Config mock
+	m := new(catalogMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(new(cartMock.GrpcMock)),
+		"catalog": catalogHandlers.NewGrpcClient(m),
+		"payment": paymentHandlers.NewGrpcClient(new(paymentMock.GrpcMock)),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
+}
+
 func TestGetProductsByName(t *testing.T) {
 	input := &catalogPb.GetProductsByNameRequest{Name: "item2"}
 	expected := &catalogPb.GetProductsResponse{
@@ -159,4 +206,50 @@ func TestGetProductsByName(t *testing.T) {
 		// Check for result struct match
 		assert.ElementsMatch(t, res.Products, expected.Products)
 	}
+}
+
+func TestGetProductsByNameWithError(t *testing.T) {
+	input := &catalogPb.GetProductsByNameRequest{Name: "item2"}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodGet
+	mockMethod := "Grpc_GetProductsByName"
+	route := "/products/search?name=item2"
+
+	// Config mock
+	m := new(catalogMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(new(cartMock.GrpcMock)),
+		"catalog": catalogHandlers.NewGrpcClient(m),
+		"payment": paymentHandlers.NewGrpcClient(new(paymentMock.GrpcMock)),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
 }

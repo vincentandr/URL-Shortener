@@ -3,6 +3,7 @@ package paymentHandlers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -102,6 +103,52 @@ func TestGetOrders(t *testing.T) {
 	}
 }
 
+func TestGetOrdersWithError(t *testing.T) {
+	input := &paymentPb.GetOrdersRequest{UserId: ""}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodGet
+	mockMethod := "Grpc_GetOrders"
+	route := "/payment"
+
+	// Config mock
+	m := new(paymentMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(new(cartMock.GrpcMock)),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(m),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
+}
+
 func TestGetOrdersWithUserId(t *testing.T) {
 	input := &paymentPb.GetOrdersRequest{UserId: "user1"}
 	expected := &paymentPb.GetOrdersResponse{
@@ -181,6 +228,52 @@ func TestGetOrdersWithUserId(t *testing.T) {
 	}
 }
 
+func TestGetOrdersWithUserIdWithError(t *testing.T) {
+	input := &paymentPb.GetOrdersRequest{UserId: "user1"}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodGet
+	mockMethod := "Grpc_GetOrders"
+	route := "/payment/user1"
+
+	// Config mock
+	m := new(paymentMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(new(cartMock.GrpcMock)),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(m),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
+}
+
 func TestMakePayment(t *testing.T) {
 	input := &paymentPb.PaymentRequest{OrderId: "orderid1"}
 	expected := &paymentPb.PaymentResponse{}
@@ -236,4 +329,50 @@ func TestMakePayment(t *testing.T) {
 		// Check for result struct match
 		assert.ElementsMatch(t, res, expected)
 	}
+}
+
+func TestMakePaymentWithError(t *testing.T) {
+	input := &paymentPb.PaymentRequest{OrderId: "orderid1"}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodPut
+	mockMethod := "Grpc_MakePayment"
+	route := "/payment/orderid1"
+
+	// Config mock
+	m := new(paymentMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(new(cartMock.GrpcMock)),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(m),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
 }

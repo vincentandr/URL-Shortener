@@ -26,13 +26,13 @@ type Server struct {
 	pb.UnimplementedCartServiceServer
 	catalogClient catalogpb.CatalogServiceClient
 	paymentClient paymentpb.PaymentServiceClient
-	dbAction *db.Action
+	repo *db.Repository
 	rmqConsumer *rmqCart.RbmqListener
 }
 
 func (s *Server) Grpc_GetCartItems(ctx context.Context, in *pb.GetCartItemsRequest) (*pb.ItemsResponse, error) {
 	// Get product ids and its quantity in cart by userId
-	res, err := s.dbAction.GetCartItems(ctx, in.UserId)
+	res, err := s.repo.GetCartItems(ctx, in.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (s *Server) Grpc_GetCartItems(ctx context.Context, in *pb.GetCartItemsReque
 }
 
 func (s *Server) Grpc_AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequest) (*pb.ItemsResponse, error) {
-	res, err := s.dbAction.AddOrUpdateCart(ctx, in.UserId, in.ProductId, int(in.NewQty))
+	res, err := s.repo.AddOrUpdateCart(ctx, in.UserId, in.ProductId, int(in.NewQty))
 	if err != nil{
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *Server) Grpc_AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCar
 }
 
 func (s *Server) Grpc_RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemFromCartRequest) (*pb.ItemsResponse, error) {
-	res, err := s.dbAction.RemoveItemFromCart(ctx, in.UserId, in.ProductId)
+	res, err := s.repo.RemoveItemFromCart(ctx, in.UserId, in.ProductId)
 	if err != nil{
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (s *Server) Grpc_RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemF
 }
 
 func (s *Server) Grpc_RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartItemsRequest) (*pb.ItemsResponse, error) {
-	res, err := s.dbAction.RemoveAllCartItems(ctx, in.UserId)
+	res, err := s.repo.RemoveAllCartItems(ctx, in.UserId)
 	if err != nil{
 		return nil, err
 	}
@@ -203,7 +203,8 @@ func main() {
 	}
 
     // Init Redis db
-	rdb := rds.NewDb()
+	idx, _ := strconv.Atoi(os.Getenv("REDIS_DB_INDEX"))
+	rdb := rds.NewDb(idx)
 	defer func(){
 		if err = rdb.Close(); err != nil {
 			fmt.Println(err)
@@ -211,7 +212,7 @@ func main() {
 	}()
 
 	// Database actions
-	action := db.NewAction(rdb.Conn)
+	action := db.NewRepository(rdb.Conn)
 
 	// RabbitMQ client
 	rmqClient, err := rbmq.NewRabbitMQ()
@@ -269,7 +270,7 @@ func main() {
 	srv := &Server{
 		catalogClient: catalogRpc.Client,
 		paymentClient: paymentRpc.Client,
-		dbAction: action,
+		repo: action,
 		rmqConsumer: consumer,
 	}
 

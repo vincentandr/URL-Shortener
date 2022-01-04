@@ -3,6 +3,7 @@ package cartHandlers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -95,6 +96,52 @@ func TestGetCartItems(t *testing.T) {
 	}
 }
 
+func TestGetCartItemsWithError(t *testing.T) {
+	input := &cartPb.GetCartItemsRequest{UserId: "user1"}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodGet
+	mockMethod := "Grpc_GetCartItems"
+	route := "/cart/user1"
+
+	// Config mock
+	m := new(cartMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(m),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(new(paymentMock.GrpcMock)),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
+}
+
 func TestAddOrUpdateCartQty(t *testing.T) {
 	input := &cartPb.AddOrUpdateCartRequest{
 		UserId: "user1", 
@@ -163,6 +210,56 @@ func TestAddOrUpdateCartQty(t *testing.T) {
 		// Check for result struct match
 		assert.ElementsMatch(t, res.Products, expected.Products)
 	}
+}
+
+func TestAddOrUpdateCartQtyWithError(t *testing.T) {
+	input := &cartPb.AddOrUpdateCartRequest{
+		UserId: "user1", 
+		ProductId: "productid1", 
+		NewQty: 12,
+	}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodPut
+	mockMethod := "Grpc_AddOrUpdateCart"
+	route := "/cart/user1/productid1?qty=12"
+
+	// Config mock
+	m := new(cartMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(m),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(new(paymentMock.GrpcMock)),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
 }
 
 func TestRemoveCartItem(t *testing.T) {
@@ -234,6 +331,55 @@ func TestRemoveCartItem(t *testing.T) {
 	}
 }
 
+func TestRemoveCartItemWithError(t *testing.T) {
+	input := &cartPb.RemoveItemFromCartRequest{
+		UserId: "user1", 
+		ProductId: "productid1",
+	}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodDelete
+	mockMethod := "Grpc_RemoveItemFromCart"
+	route := "/cart/user1/productid1"
+
+	// Config mock
+	m := new(cartMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(m),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(new(paymentMock.GrpcMock)),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
+}
+
 func TestRemoveAllCartItems(t *testing.T) {
 	input := &cartPb.RemoveAllCartItemsRequest{UserId: "user1",}
 	expected := &cartPb.ItemsResponse{}
@@ -291,6 +437,52 @@ func TestRemoveAllCartItems(t *testing.T) {
 	}
 }
 
+func TestRemoveAllCartItemsWithError(t *testing.T) {
+	input := &cartPb.RemoveAllCartItemsRequest{UserId: "user1",}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodDelete
+	mockMethod := "Grpc_RemoveAllCartItems"
+	route := "/cart/user1"
+
+	// Config mock
+	m := new(cartMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(m),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(new(paymentMock.GrpcMock)),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
+}
+
 func TestCheckout(t *testing.T) {
 	input := &cartPb.CheckoutRequest{UserId: "user1",}
 	expected := &cartPb.CheckoutResponse{OrderId: "orderid1"}
@@ -346,4 +538,50 @@ func TestCheckout(t *testing.T) {
 		// Check for result struct match
 		assert.Equal(t, res, expected)
 	}
+}
+
+func TestCheckoutWithError(t *testing.T) {
+	input := &cartPb.CheckoutRequest{UserId: "user1",}
+	expected := http.StatusInternalServerError
+	httpMethod := http.MethodGet
+	mockMethod := "Grpc_Checkout"
+	route := "/cart/checkout/user1"
+
+	// Config mock
+	m := new(cartMock.GrpcMock)
+
+	m.On(mockMethod, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+
+	// Handlers for routers
+	handlerMap := map[string]interface{}{
+		"cart": cartHandlers.NewGrpcClient(m),
+		"catalog": catalogHandlers.NewGrpcClient(new(catalogMock.GrpcMock)),
+		"payment": paymentHandlers.NewGrpcClient(new(paymentMock.GrpcMock)),
+	}
+
+	r := routes.NewRouter(handlerMap)
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Config request
+	url := server.URL + route
+
+	req, err := http.NewRequestWithContext(context.Background(), httpMethod, url, nil)
+	if err != nil {
+		t.Fatalf("could not create %s request: %v", httpMethod, err)
+	}
+	req.Close = true
+
+	// Send request
+	client := &http.Client{}
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("could not send %s request: %v", httpMethod, err)
+	}
+	defer resp.Body.Close()
+
+	// Check for http status match
+	assert.Equal(t, expected, resp.StatusCode)
 }

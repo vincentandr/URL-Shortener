@@ -14,16 +14,34 @@ type GrpcMock struct {
 
 func (m *GrpcMock) Grpc_GetOrders(ctx context.Context, in *pb.GetOrdersRequest, opts ...grpc.CallOption) (*pb.GetOrdersResponse, error) {
 	args := m.Called(ctx, in, opts)
+
+	var r0 *pb.GetOrdersResponse
 	
-	return args.Get(0).(*pb.GetOrdersResponse), args.Error(1)
+	if args.Get(0) != nil {
+		r0 = args.Get(0).(*pb.GetOrdersResponse)
+	}
+	
+	return r0, args.Error(1)
 }
 func (m *GrpcMock) Grpc_PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest, opts ...grpc.CallOption) (*pb.CheckoutResponse, error) {
 	args := m.Called(ctx, in, opts)
 	
-	return args.Get(0).(*pb.CheckoutResponse), args.Error(1)
+	var r0 *pb.CheckoutResponse
+	
+	if args.Get(0) != nil {
+		r0 = args.Get(0).(*pb.CheckoutResponse)
+	}
+	
+	return r0, args.Error(1)
 }
 func (m *GrpcMock) Grpc_MakePayment(ctx context.Context, in *pb.PaymentRequest, opts ...grpc.CallOption) (*pb.PaymentResponse, error) {
 	args := m.Called(ctx, in, opts)
 	
-	return args.Get(0).(*pb.PaymentResponse), args.Error(1)
+	var r0 *pb.PaymentResponse
+	
+	if args.Get(0) != nil {
+		r0 = args.Get(0).(*pb.PaymentResponse)
+	}
+	
+	return r0, args.Error(1)
 }

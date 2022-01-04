@@ -21,13 +21,13 @@ import (
 
 type Server struct {
 	pb.UnimplementedPaymentServiceServer
-	dbAction *db.Action
+	repo *db.Repository
 	rmqClient *rbmq.Rabbitmq
 }
 
 func (s *Server) Grpc_GetOrders(ctx context.Context, in *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
 	// Get all orders from db
-	cursor, err := s.dbAction.GetOrders(ctx, in.UserId)
+	cursor, err := s.repo.GetOrders(ctx, in.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *Server) Grpc_GetOrders(ctx context.Context, in *pb.GetOrdersRequest) (*
 
 func (s *Server) Grpc_PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
 	// Change order status to draft
-	orderId, err := s.dbAction.Checkout(ctx, in.UserId, in.Items)
+	orderId, err := s.repo.Checkout(ctx, in.UserId, in.Items)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (s *Server) Grpc_MakePayment(ctx context.Context, in *pb.PaymentRequest) (*
 	if err != nil{
 		return nil, fmt.Errorf("failed to convert from hex to objectID: %v", err)
 	}
-	order, err := s.dbAction.GetItemsFromOrder(ctx, orderId)
+	order, err := s.repo.GetItemsFromOrder(ctx, orderId)
 	if err != nil{
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (s *Server) Grpc_MakePayment(ctx context.Context, in *pb.PaymentRequest) (*
 	}
 
 	// Change order status
-	err = s.dbAction.MakePayment(ctx, orderId)
+	err = s.repo.MakePayment(ctx, orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	action, err := db.NewAction(client)
+	action, err := db.NewRepository(client)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -151,7 +151,7 @@ func main() {
 	}()
 
 	// Initialize server
-	srv := &Server{dbAction: action, rmqClient: rmqClient}
+	srv := &Server{repo: action, rmqClient: rmqClient}
 
 	// gRPC
 	lis, err := net.Listen("tcp", os.Getenv("GRPC_PAYMENT_PORT"))
