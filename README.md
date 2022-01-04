@@ -26,6 +26,17 @@
 /payment/{orderId}          PUT - Change order status to paid
 ```
 
+## Tests
+HTTP handlers test
+```
+go test ./cmd/bff/
+```
+
+Cart helper functions test
+```
+go test ./cmd/cart/
+```
+
 ## Docker commands
 **Create `data` folder for mongo DB replica set first:**
 ```
