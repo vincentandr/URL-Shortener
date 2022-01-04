@@ -34,7 +34,7 @@ go test -v ./cmd/bff/internal/handler/...
 
 Cart helper functions test
 ```
-go test ./cmd/cart/
+go test -v ./cmd/cart/
 ```
 
 ## Docker commands
