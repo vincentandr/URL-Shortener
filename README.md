@@ -6,22 +6,24 @@
 
 ### Catalog APIs
 ```
-/products GET --- Get all products 
-/products/search GET --- Search products by name query parameter
+/products                   GET - Get all products 
+/products/search            GET - Search products by name query parameter
 ```
 
 ### Cart APIs
 ```
-/cart/{userId} GET --- Get cart items
-/cart/{userId} DELETE --- Delete all cart items
-/cart/{userId}/{productId} PUT --- Add or replace cart item with qty query parameter
-/cart/{userId}/{productId} DELETE --- Delete a particular cart item by id
-/cart/checkout/{userId} GET --- Checkout, returns an order ID to be used for payment
+/cart/{userId}              GET - Get cart items
+/cart/{userId}              DELETE - Delete all cart items
+/cart/{userId}/{productId}  PUT - Add or replace cart item with qty query parameter
+/cart/{userId}/{productId}  DELETE - Delete a particular cart item by id
+/cart/checkout/{userId}     GET - Checkout, returns an order ID to be used for payment
 ```
 
 ### Payment APIs
 ```
-/payment/{orderId} PUT --- Change order status to paid
+/payment                    GET - Get all orders
+/payment/{userId}           GET - Get all orders by user ID
+/payment/{orderId}          PUT - Change order status to paid
 ```
 
 ## Docker commands
