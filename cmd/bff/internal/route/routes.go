@@ -2,9 +2,9 @@ package routes
 
 import (
 	"github.com/gorilla/mux"
-	cartHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handler/cart"
-	catalogHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handler/catalog"
-	paymentHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/web/handler/payment"
+	cartHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/handler/cart"
+	catalogHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/handler/catalog"
+	paymentHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/handler/payment"
 )
 
 type Router struct {
