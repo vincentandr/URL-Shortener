@@ -63,3 +63,8 @@ localhost:15672
 ```
 protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative <filename>
 ```
+
+## Possible improvements
+
+- Purely asynchronous communication between microservices (RabbitMQ pub/sub instead of GRPC, and return the async response using websocket / the client periodically polls for result)
+- Caching results for certain requests
