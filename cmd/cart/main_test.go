@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/cart"
 	catalogpb "github.com/vincentandr/shopping-microservice/internal/proto/catalog"
+	"github.com/vincentandr/shopping-microservice/cmd/cart/internal/server"
 )
 
 // Test to get item ids from cart items map
@@ -40,7 +41,7 @@ func TestGetMapKeys(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			res := GetMapKeys(tc.items)
+			res := server.GetMapKeys(tc.items)
 			assert.ElementsMatch(t, res, tc.expected)
 		})
 	}
@@ -140,7 +141,7 @@ func TestAppendItemToResponse(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := AppendItemToResponse(tc.products, tc.cartItems)
+			res, err := server.AppendItemToResponse(tc.products, tc.cartItems)
 			if assert.NoError(t, err) {
 				assert.ElementsMatch(t, res.Products, tc.expected.Products)
 			}
