@@ -10,96 +10,12 @@ import (
 
 	"github.com/joho/godotenv"
 	db "github.com/vincentandr/shopping-microservice/cmd/payment/internal/db"
-	rmqPayment "github.com/vincentandr/shopping-microservice/cmd/payment/internal/pubsub"
-	"github.com/vincentandr/shopping-microservice/internal/model"
+	"github.com/vincentandr/shopping-microservice/cmd/payment/internal/server"
 	"github.com/vincentandr/shopping-microservice/internal/mongodb"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/payment"
 	rbmq "github.com/vincentandr/shopping-microservice/internal/rabbitmq"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc"
 )
-
-type Server struct {
-	pb.UnimplementedPaymentServiceServer
-	repo *db.Repository
-	rmqClient *rbmq.Rabbitmq
-}
-
-func (s *Server) Grpc_GetOrders(ctx context.Context, in *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
-	// Get all orders from db
-	cursor, err := s.repo.GetOrders(ctx, in.UserId)
-	if err != nil {
-		return nil, err
-	}
-
-	orders := pb.GetOrdersResponse{}
-	
-	res := model.Order{}
-
-	for cursor.Next(ctx) {
-		// Convert document to above struct
-		err := cursor.Decode(&res)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode document: %v", err)
-		}
-
-		var items []*pb.ItemResponse
-
-		for _, item := range res.Items {
-			var temp pb.ItemResponse
-			
-			// Convert model.Product to pb.ItemResponse
-			temp.ProductId = item.Product_id.Hex()
-			temp.Name = item.Name
-			temp.Price = item.Price
-			temp.Qty = int32(item.Qty)
-
-			items = append(items, &temp)
-		}
-
-		order := &pb.GetOrderResponse{OrderId: res.Order_id.Hex(), UserId: res.User_id, Items: items, Status: res.Status}
-
-		orders.Orders = append(orders.Orders, order)
-	}
-	
-	return &orders, nil
-}
-
-func (s *Server) Grpc_PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
-	// Change order status to draft
-	orderId, err := s.repo.Checkout(ctx, in.UserId, in.Items)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.CheckoutResponse{OrderId: orderId}, nil
-}
-
-func (s *Server) Grpc_MakePayment(ctx context.Context, in *pb.PaymentRequest) (*pb.PaymentResponse, error) {
-	// Get order document
-	orderId, err := primitive.ObjectIDFromHex(in.OrderId)
-	if err != nil{
-		return nil, fmt.Errorf("failed to convert from hex to objectID: %v", err)
-	}
-	order, err := s.repo.GetItemsFromOrder(ctx, orderId)
-	if err != nil{
-		return nil, err
-	}
-
-	// Fire event to product catalog reducing qty and to cart emptying user cart
-	err = rmqPayment.PaymentSuccessfulEventPublish(s.rmqClient.Channel, order)
-	if err != nil {
-		return nil, err
-	}
-
-	// Change order status
-	err = s.repo.MakePayment(ctx, orderId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.PaymentResponse{}, nil
-}
 
 func main() {
 	err := godotenv.Load()
@@ -126,12 +42,12 @@ func main() {
 		fmt.Println(err)
 	}
 
-	action, err := db.NewRepository(client)
+	repo, err := db.NewRepository(client)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = action.InitCollection(context.Background())
+	err = repo.InitCollection(context.Background())
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -151,7 +67,7 @@ func main() {
 	}()
 
 	// Initialize server
-	srv := &Server{repo: action, rmqClient: rmqClient}
+	srv := &server.Server{Repo: repo, RmqClient: rmqClient}
 
 	// gRPC
 	lis, err := net.Listen("tcp", os.Getenv("GRPC_PAYMENT_PORT"))
