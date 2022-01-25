@@ -2,7 +2,24 @@
 
 ![Untitled Diagram](https://user-images.githubusercontent.com/42005057/147475016-bc2f7406-ed5d-4d1f-8471-b9ba47caef6b.png)
 
+## Start via Docker commands
+**Create `data` folder for mongo DB replica set first:**
+```
+shopping-microservice/
+  ...
+  data/
+    mongo1/
+    mongo2/
+    mongo3/
+```
+Then start the docker containers by using the command:
+```
+docker-compose up -d
+```
+
 ## API
+
+Call the APIs using API platform, e.g. Postman.
 
 ### Catalog APIs
 ```
@@ -37,23 +54,10 @@ Cart helper functions test
 go test -v ./cmd/cart/
 ```
 
-## Docker commands
-**Create `data` folder for mongo DB replica set first:**
-```
-shopping-microservice/
-  ...
-  data/
-    mongo1/
-    mongo2/
-    mongo3/
-```
-Then start the docker containers by using the command:
-```
-docker-compose up -d
-```
-
 ## Miscellaneous
 ### RabbitMQ Management / Admin
+
+Access RabbitMQ admin web page for monitoring purpose.
 ```
 localhost:15672
 ```
