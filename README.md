@@ -56,6 +56,8 @@ go test -v ./cmd/cart/
 
 ## Miscellaneous
 ### RabbitMQ Management / Admin
+
+Access RabbitMQ admin web page for monitoring purpose.
 ```
 localhost:15672
 ```
