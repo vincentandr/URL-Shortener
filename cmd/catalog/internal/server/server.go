@@ -35,7 +35,7 @@ func (s *Server) Grpc_GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb
 			return nil, fmt.Errorf("failed to decode document: %v", err)
 		}
 
-		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty)}
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
 
 		products.Products = append(products.Products, product)
 	}
@@ -100,7 +100,7 @@ func (s *Server) Grpc_GetProductsByName(ctx context.Context, in *pb.GetProductsB
 			return nil, fmt.Errorf("failed to decode document: %v", err)
 		}
 
-		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty)}
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
 
 		products.Products = append(products.Products, product)
 	}

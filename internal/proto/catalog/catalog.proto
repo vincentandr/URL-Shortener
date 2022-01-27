@@ -35,6 +35,8 @@ message GetProductResponse {
     string name = 2;
     float price = 3;
     int32 qty = 4;
+    string desc = 5;
+    string image = 6;
 }
 
 message GetProductsResponse{

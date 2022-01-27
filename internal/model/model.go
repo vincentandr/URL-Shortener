@@ -7,6 +7,8 @@ type Product struct {
 	Name       string             `bson:"name"`
 	Price      float32            `bson:"price"`
 	Qty        int                `bson:"qty"`
+	Desc string `bson:"desc"`
+	Image string `bson:"image"`
 }
 
 type Order struct {

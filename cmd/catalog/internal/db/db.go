@@ -2,7 +2,11 @@ package catalogdb
 
 import (
 	"context"
+	_ "embed"
+	"encoding/csv"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/vincentandr/shopping-microservice/internal/model"
 	"github.com/vincentandr/shopping-microservice/internal/mongodb"
@@ -11,6 +15,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// embed catalog.csv into compiled go binary
+//go:embed seed/catalog.csv
+var catalog string
 
 type Repository struct {
 	Conn *mongo.Client
@@ -56,18 +64,35 @@ func CreateIndex(ctx context.Context, r *Repository) error {
 
 func SeedCollection(ctx context.Context, r *Repository) error {
 	count, err := r.Collection.CountDocuments(ctx, bson.D{})
+	// Seed only if collection has 0 document
 	if err == nil && count == 0 {
-		docs := []interface{}{
-			bson.D{
-				{Key:"name", Value: "laptop"},
-				{Key:"price", Value: 600},
-				{Key:"qty", Value: 14},
-			},
-			bson.D{
-				{Key:"name", Value: "computer"},
-				{Key:"price", Value: 800},
-				{Key:"qty", Value: 32},
-			},
+		docs := []interface{}{}
+
+		// new strings reader from embedded catalog.csv
+		stringsReader := strings.NewReader(catalog)
+		csvReader := csv.NewReader(stringsReader)
+
+		// read per line until EOF
+		for{
+			record, err := csvReader.Read()
+			if err != nil { // EOF
+				break
+			}
+
+			name := record[0]
+			price, _ := strconv.Atoi(record[1])
+			qty, _ := strconv.Atoi(record[2])
+			desc := record[3]
+			image := record[4]
+
+			doc := bson.D{
+				{Key:"name", Value: name},
+				{Key:"price", Value: price},
+				{Key:"qty", Value: qty},
+				{Key:"desc", Value: desc},
+				{Key:"image", Value: image},
+			}
+			docs = append(docs, doc)
 		}
 
 		_, err = r.Collection.InsertMany(ctx, docs)
