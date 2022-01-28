@@ -1,6 +1,6 @@
 import React from "react"
 import {useState, useEffect} from "react";
-import {Grid, Snackbar} from "@mui/material";
+import {Grid, Snackbar, Alert} from "@mui/material";
 
 import Product from "./Product";
 
@@ -25,15 +25,27 @@ const Products = ({products}) => {
         setMessageInfo(undefined)
     }
 
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+        return;
+        }
+
+        setOpen(false);
+    };
+
     return (
         <main>
             <Snackbar
                 open={open}
                 autoHideDuration={6000}
-                message="Item added to cart"
                 TransitionProps={{onExited: handleExited}}
                 severity="success"
-                />
+                onClose={handleClose}
+            >
+                <Alert severity="success" sx={{ width: '100%' }}>
+                    Item added to cart
+                </Alert>
+            </Snackbar>
             <Grid container justify="center" spacing={4}>
                 {products.map((product) => (
                     <Grid item key={product.product_id} xs={6} md={4} lg={3}>
