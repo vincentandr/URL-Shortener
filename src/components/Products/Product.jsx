@@ -11,15 +11,23 @@ const Product = ({product, setSnackPack}) => {
     const dispatch = useDispatch()
     const cart = useContext(CartContext)
 
-    const handleCartClick = (productId, qty) => {
+    const handleCartClick = (productId, qty, price, desc, image) => {
         // Add +1 to qty if item already exists in cart
         let obj = cart.find(item => item.product_id === productId)
 
         if (obj !== undefined){
-            qty += obj.qty
+           qty += obj.qty
         }
 
-        dispatch(addCartItem(productId, qty)).then((result) => {
+        let item = {
+            productId: productId,
+            qty: qty,
+            price: price,
+            desc: desc,
+            image: image,
+        }
+
+        dispatch(addCartItem(item)).then((result) => {
             setSnackPack((prev) => [...prev, { key: new Date().getTime() }]);
         })
     }
@@ -42,7 +50,12 @@ const Product = ({product, setSnackPack}) => {
                 <Typography variant="body2">{product.desc}</Typography>
             </CardContent>
             <CardActions>
-                <IconButton aria-label="Add to cart" onClick={() => handleCartClick(product.product_id, 1)}>
+                <IconButton aria-label="Add to cart" onClick={() => handleCartClick(
+                    product.product_id,
+                    1,
+                    product.price,
+                    product.desc,
+                    product.image)}>
                     <AddShoppingCart />
                 </IconButton>
             </CardActions>

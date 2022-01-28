@@ -6,22 +6,32 @@ const fetchCart = () => async (dispatch) => {
     const uri = config.apiUrl + "/cart/user1";
     const { data } = await axios.get(uri);
 
-    dispatch({ type: "FETCH_CART", payload: data.products });
+    let result = [];
+
+    if (Object.keys(data).length !== 0) {
+      result = data.products;
+    }
+
+    dispatch({ type: "FETCH_CART", payload: result });
   } catch (error) {
     console.log(error);
   }
 };
 
-const addCartItem = (productId, quantity) => async (dispatch) => {
+const addCartItem = (item) => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/cart/user1/" + productId;
+    console.log(item);
+    const uri = config.apiUrl + "/cart/user1/" + item.productId;
 
     const { data } = await axios.put(
       uri,
       {},
       {
         params: {
-          qty: quantity,
+          qty: item.qty,
+          price: item.price,
+          desc: item.desc,
+          image: item.image,
         },
       }
     );

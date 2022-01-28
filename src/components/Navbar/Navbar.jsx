@@ -14,7 +14,7 @@ const Navbar = ({totalItems}) => {
     }
 
     return (
-        <AppBar position="fixed" color="inherit">
+        <AppBar position="sticky" color="inherit">
             <Toolbar>
                 <Typography variant="h6" color="inherit">
                     <img src={logo} alt="Shopping-Micro" height="25px" />

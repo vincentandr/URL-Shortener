@@ -2,7 +2,7 @@ import React, { useEffect, createContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import "../css/App.css";
 
-import { Products, Navbar } from "../components";
+import { Products, Navbar, Cart } from "../components";
 import { fetchProducts, fetchCart } from "../actions";
 
 const getSelectors = (state) => ({
@@ -25,6 +25,7 @@ function App() {
   return (
     <div className="App">
       <Navbar totalItems={cart.length} />
+      {/* <Cart cart={cart}></Cart> */}
       <CartContext.Provider value={cart}>
         <Products products={products} />
       </CartContext.Provider>
