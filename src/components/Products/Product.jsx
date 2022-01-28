@@ -1,4 +1,5 @@
-import {React, useContext} from "react";
+import React from "react"
+import {useContext} from "react";
 import { useDispatch } from "react-redux";
 import {Card, CardMedia, CardContent, CardActions, Typography, IconButton} from "@mui/material"
 import { AddShoppingCart } from "@mui/icons-material";
@@ -6,18 +7,21 @@ import { AddShoppingCart } from "@mui/icons-material";
 import { CartContext } from "../../pages/App"
 import { addCartItem } from "../../actions";
 
-const Product = ({product}) => {
+const Product = ({product, setSnackPack}) => {
     const dispatch = useDispatch()
     const cart = useContext(CartContext)
 
     const handleCartClick = (productId, qty) => {
+        // Add +1 to qty if item already exists in cart
         let obj = cart.find(item => item.product_id === productId)
 
         if (obj !== undefined){
             qty += obj.qty
         }
 
-        dispatch(addCartItem(productId, qty))
+        dispatch(addCartItem(productId, qty)).then((result) => {
+            setSnackPack((prev) => [...prev, { key: new Date().getTime() }]);
+        })
     }
 
     return (
@@ -46,4 +50,4 @@ const Product = ({product}) => {
     )
 }
 
-export default Product;
+export default React.memo(Product);

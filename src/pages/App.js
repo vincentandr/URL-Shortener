@@ -24,7 +24,7 @@ function App() {
 
   return (
     <div className="App">
-      <Navbar cart={cart} />
+      <Navbar totalItems={cart.length} />
       <CartContext.Provider value={cart}>
         <Products products={products} />
       </CartContext.Provider>
