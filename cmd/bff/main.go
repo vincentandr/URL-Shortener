@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
 	cartHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/handler/cart"
 	catalogHandlers "github.com/vincentandr/shopping-microservice/cmd/bff/internal/handler/catalog"
@@ -27,7 +28,12 @@ func NewHTTPServer(r *routes.Router, port string) *Server{
 }
 
 func (s *Server) HTTPListenAndServe() {
-	http.ListenAndServe(s.Port, s.Router)
+	fmt.Println(os.Getenv("ORIGIN_ALLOWED"))
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-type"})
+	originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"})
+
+	http.ListenAndServe(s.Port, handlers.CORS(headersOk, originsOk, methodsOk)(s.Router))
 }
 
 func main() {
