@@ -29,6 +29,8 @@ message ItemResponse{
     string name = 2;
     float price = 3;
     int32 qty = 4;
+    string desc = 5;
+    string image = 6;
 }
 
 message ItemsResponse {
@@ -39,6 +41,9 @@ message AddOrUpdateCartRequest {
     string user_id = 1;
     string product_id = 2;
     int32 new_qty = 3;
+    float price = 4;
+    string desc = 5;
+    string image = 6;
 }
 
 message RemoveItemFromCartRequest {

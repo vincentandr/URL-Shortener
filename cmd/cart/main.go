@@ -13,7 +13,6 @@ import (
 	db "github.com/vincentandr/shopping-microservice/cmd/cart/internal/db"
 	rmqCart "github.com/vincentandr/shopping-microservice/cmd/cart/internal/pubsub"
 	"github.com/vincentandr/shopping-microservice/cmd/cart/internal/server"
-	catalogGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/catalog"
 	paymentGrpc "github.com/vincentandr/shopping-microservice/internal/grpc/payment"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/cart"
 	rbmq "github.com/vincentandr/shopping-microservice/internal/rabbitmq"
@@ -67,19 +66,6 @@ func main() {
     // gRPC
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
-	
-	catalogRpc, err := catalogGrpc.NewGrpcClient(ctx)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer func(){
-		if err = catalogRpc.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	ctx, cancel = context.WithTimeout(context.Background(), 10 * time.Second)
-	defer cancel()
 
 	paymentRpc, err := paymentGrpc.NewGrpcClient(ctx)
 	if err != nil {
@@ -93,7 +79,6 @@ func main() {
 
 	// Initialize server
 	srv := &server.Server{
-		CatalogClient: catalogRpc.Client,
 		PaymentClient: paymentRpc.Client,
 		Repo: repo,
 		RmqConsumer: consumer,
