@@ -1,10 +1,17 @@
 import React from "react";
-import {Toolbar, IconButton, Badge, MenuItem, Menu, Typography, AppBar, TextField, InputAdornment} from "@mui/material";
-import {ShoppingCart, Search} from "@mui/icons-material";
+import {Toolbar, IconButton, Badge, Box, Typography, AppBar, TextField, InputAdornment, Stack} from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import {ShoppingCart, Search, AccountCircle} from "@mui/icons-material";
 import { useDispatch } from "react-redux";
 
-import logo from "../../assets/logo.svg";
 import { searchProducts } from "../../actions/Products";
+
+const theme = createTheme({
+  typography: {
+    fontFamily: 'Fugaz One',
+  },
+});
+
 
 const Navbar = ({totalItems, onClickDrawer}) => {
     const dispatch = useDispatch();
@@ -14,12 +21,20 @@ const Navbar = ({totalItems, onClickDrawer}) => {
     }
 
     return (
-        <AppBar position="sticky" color="inherit">
-            <Toolbar>
-                <Typography variant="h6" color="inherit">
-                    <img src={logo} alt="Shopping-Micro" height="25px" />
-                </Typography>
-                <div>
+        <AppBar position="relative" color="inherit">
+            <Toolbar sx={{
+                ml: "5%",
+                mr: "5%",
+            }}>
+                <ThemeProvider theme={theme}>
+                    <Typography variant="h4" color="inherit">
+                        Microshopping
+                    </Typography>
+                </ThemeProvider>
+                <Box sx={{
+                    flexGrow: 1
+                }}/>
+                <Stack direction="row" spacing={1}>
                     <TextField
                         id="outlined-adornment-password"
                         InputProps={{
@@ -34,15 +49,16 @@ const Navbar = ({totalItems, onClickDrawer}) => {
                         size="small"
                         variant="outlined"
                     />
-                </div>
-                <div>
                     <IconButton aria-label="Show cart items" color="inherit" onClick={() => onClickDrawer(true)}>
                         <Badge badgeContent={totalItems} color="secondary">
-                            <ShoppingCart />
+                            <ShoppingCart/>
                         </Badge>
                     </IconButton>
-                </div>
-            </Toolbar>
+                    <IconButton aria-label="Show cart items"  color="inherit">
+                        <AccountCircle/>
+                    </IconButton>
+                </Stack>
+        </Toolbar>
         </AppBar>
     )
 }

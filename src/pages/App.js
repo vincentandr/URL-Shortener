@@ -1,6 +1,5 @@
 import React, { useState, useEffect, createContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import "../css/App.css";
 
 import { Products, Navbar, Cart } from "../components";
 import { fetchProducts, fetchCart } from "../actions";

@@ -1,8 +1,8 @@
 import React from "react"
 import {useState, useEffect} from "react";
-import {Grid, Snackbar, Alert} from "@mui/material";
+import {Grid, Snackbar, Alert, Box} from "@mui/material";
 
-import Product from "./Product";
+import Product from "./Product/Product";
 
 const Products = ({products}) => {
     const [snackPack, setSnackPack] = useState([]);
@@ -46,13 +46,17 @@ const Products = ({products}) => {
                     Item added to cart
                 </Alert>
             </Snackbar>
-            <Grid container justify="center" spacing={4}>
-                {products.map((product) => (
-                    <Grid item key={product.product_id} xs={6} md={4} lg={3}>
-                        <Product product={product} setSnackPack={setSnackPack}/>
-                    </Grid>
-                ))}
-            </Grid>
+            <Box sx={{
+                p: 3
+            }}>
+                <Grid container justify="center" spacing={4}>
+                    {products.map((product) => (
+                        <Grid item key={product.product_id} xs={6} md={4} lg={3}>
+                            <Product product={product} setSnackPack={setSnackPack}/>
+                        </Grid>
+                    ))}
+                </Grid>
+            </Box>
         </main>
     )
 }

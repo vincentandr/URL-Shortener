@@ -27,6 +27,7 @@ const addCartItem = (item) => async (dispatch) => {
       {},
       {
         params: {
+          name: item.name,
           qty: item.qty,
           price: item.price,
           desc: item.desc,
