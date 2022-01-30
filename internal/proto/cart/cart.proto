@@ -40,10 +40,11 @@ message ItemsResponse {
 message AddOrUpdateCartRequest {
     string user_id = 1;
     string product_id = 2;
-    int32 new_qty = 3;
-    float price = 4;
-    string desc = 5;
-    string image = 6;
+    string name = 3;
+    int32 new_qty = 4;
+    float price = 5;
+    string desc = 6;
+    string image = 7;
 }
 
 message RemoveItemFromCartRequest {

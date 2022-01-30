@@ -54,7 +54,7 @@ func (s *Server) Grpc_GetCartItems(ctx context.Context, in *pb.GetCartItemsReque
 }
 
 func (s *Server) Grpc_AddOrUpdateCart(ctx context.Context, in *pb.AddOrUpdateCartRequest) (*pb.ItemsResponse, error) {
-	res, err := s.Repo.AddOrUpdateCart(ctx, CACHE_EXPIRE, in.UserId, in.ProductId, int(in.NewQty), float32(in.Price), in.Desc, in.Image)
+	res, err := s.Repo.AddOrUpdateCart(ctx, CACHE_EXPIRE, in.UserId, in.ProductId, in.Name, int(in.NewQty), float32(in.Price), in.Desc, in.Image)
 	if err != nil{
 		return nil, err
 	}

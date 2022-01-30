@@ -28,7 +28,6 @@ func NewHTTPServer(r *routes.Router, port string) *Server{
 }
 
 func (s *Server) HTTPListenAndServe() {
-	fmt.Println(os.Getenv("ORIGIN_ALLOWED"))
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-type"})
 	originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"})

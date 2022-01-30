@@ -53,12 +53,12 @@ func (r *Repository) GetCartItemsDetails(ctx context.Context, productIds []strin
     return res, nil
 }
 
-func (r *Repository) AddOrUpdateCart(ctx context.Context, duration time.Duration, userId string, productId string, newQty int, price float32, desc string, image string) (map[string]string, error) {
+func (r *Repository) AddOrUpdateCart(ctx context.Context, duration time.Duration, userId string, productId string, name string, newQty int, price float32, desc string, image string) (map[string]string, error) {
     pipeline := r.Conn.Pipeline()
 
     pipeline.HSet(ctx, userId, productId, newQty)
     pipeline.Expire(ctx, userId, duration)
-    pipeline.HSet(ctx, productId, "price", price, "desc", desc, "image", image)
+    pipeline.HSet(ctx, productId, "name", name, "price", price, "desc", desc, "image", image)
     pipeline.Expire(ctx, productId, duration)
 
     _, err := pipeline.Exec(ctx)
