@@ -7,13 +7,13 @@ import { AddShoppingCart } from "@mui/icons-material";
 import { CartContext } from "../../pages/App"
 import { addCartItem } from "../../actions";
 
-const Product = ({product, setSnackPack}) => {
+const Product = ({product}) => {
     const dispatch = useDispatch()
-    const cart = useContext(CartContext)
+    const value = useContext(CartContext)
 
     const handleCartClick = (productId, qty, price, desc, image) => {
         // Add +1 to qty if item already exists in cart
-        let obj = cart.find(item => item.product_id === productId)
+        let obj = value.cart.find(item => item.product_id === productId)
 
         if (obj !== undefined){
            qty += obj.qty
@@ -28,7 +28,7 @@ const Product = ({product, setSnackPack}) => {
         }
 
         dispatch(addCartItem(item)).then((result) => {
-            setSnackPack((prev) => [...prev, { key: new Date().getTime() }]);
+            value.onClickDrawer(true)
         })
     }
 

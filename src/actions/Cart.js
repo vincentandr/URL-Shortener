@@ -20,7 +20,6 @@ const fetchCart = () => async (dispatch) => {
 
 const addCartItem = (item) => async (dispatch) => {
   try {
-    console.log(item);
     const uri = config.apiUrl + "/cart/user1/" + item.productId;
 
     const { data } = await axios.put(
@@ -42,4 +41,40 @@ const addCartItem = (item) => async (dispatch) => {
   }
 };
 
-export { fetchCart, addCartItem };
+const removeCartItem = (productId) => async (dispatch) => {
+  try {
+    const uri = config.apiUrl + "/cart/user1/" + productId;
+
+    const { data } = await axios.delete(uri);
+
+    let result = [];
+
+    if (Object.keys(data).length !== 0) {
+      result = data.products;
+    }
+
+    dispatch({ type: "REMOVE_ITEM", payload: result });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const removeAllCartItems = (item) => async (dispatch) => {
+  try {
+    const uri = config.apiUrl + "/cart/user1";
+
+    const { data } = await axios.delete(uri);
+
+    let result = [];
+
+    if (Object.keys(data).length !== 0) {
+      result = data.products;
+    }
+
+    dispatch({ type: "REMOVE_ALL", payload: result });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export { fetchCart, addCartItem, removeCartItem, removeAllCartItems };

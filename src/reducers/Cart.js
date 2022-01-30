@@ -5,9 +5,9 @@ export const cart = (state = [], action) => {
     case "ADD_ITEM":
       return action.payload;
     case "REMOVE_ITEM":
-      return state;
+      return action.payload;
     case "REMOVE_ALL":
-      return state;
+      return action.payload;
     case "CHECKOUT":
     default:
       return state;

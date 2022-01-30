@@ -1,4 +1,4 @@
-import React, { useEffect, createContext } from "react";
+import React, { useState, useEffect, createContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import "../css/App.css";
 
@@ -16,6 +16,7 @@ function App() {
   const dispatch = useDispatch();
 
   const { cart, products } = useSelector(getSelectors);
+  const [drawerState, setDrawer] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -24,9 +25,9 @@ function App() {
 
   return (
     <div className="App">
-      <Navbar totalItems={cart.length} />
-      {/* <Cart cart={cart}></Cart> */}
-      <CartContext.Provider value={cart}>
+      <Navbar totalItems={cart.length} onClickDrawer={setDrawer} />
+      <CartContext.Provider value={{ cart: cart, onClickDrawer: setDrawer }}>
+        <Cart drawerState={drawerState} />
         <Products products={products} />
       </CartContext.Provider>
     </div>

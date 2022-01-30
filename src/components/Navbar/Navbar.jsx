@@ -1,12 +1,12 @@
 import React from "react";
-import {Appbar, Toolbar, IconButton, Badge, MenuItem, Menu, Typography, AppBar, TextField, InputAdornment} from "@mui/material";
+import {Toolbar, IconButton, Badge, MenuItem, Menu, Typography, AppBar, TextField, InputAdornment} from "@mui/material";
 import {ShoppingCart, Search} from "@mui/icons-material";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import logo from "../../assets/logo.svg";
 import { searchProducts } from "../../actions/Products";
 
-const Navbar = ({totalItems}) => {
+const Navbar = ({totalItems, onClickDrawer}) => {
     const dispatch = useDispatch();
 
     const search = (e) => {
@@ -36,7 +36,7 @@ const Navbar = ({totalItems}) => {
                     />
                 </div>
                 <div>
-                    <IconButton aria-label="Show cart items" color="inherit">
+                    <IconButton aria-label="Show cart items" color="inherit" onClick={() => onClickDrawer(true)}>
                         <Badge badgeContent={totalItems} color="secondary">
                             <ShoppingCart />
                         </Badge>
