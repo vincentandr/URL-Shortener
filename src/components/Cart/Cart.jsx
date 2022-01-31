@@ -30,11 +30,11 @@ const Cart = ({drawerState}) => {
     const value = useContext(CartContext)
     const dispatch = useDispatch()
 
-    const isEmpty = !value.cart.length
+    const isEmpty = !value.cart.products.length
 
     const handleQty = (op, productId, qty) => {
         // Add +1 to qty if item already exists in cart
-        let obj = value.cart.find(item => item.product_id === productId)
+        let obj = value.cart.products.find(item => item.product_id === productId)
 
         if (op === "increment"){
             obj.qty = obj.qty + qty
@@ -57,7 +57,7 @@ const Cart = ({drawerState}) => {
             <TableContainer>
                 <Table sx={{ minWidth: 650 }} aria-label="simple table">
                     <TableBody>
-                    {value.cart.map((product) => (
+                    {value.cart.products.map((product) => (
                         <TableRow
                         key={product.product_id}
                         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
@@ -114,7 +114,7 @@ const Cart = ({drawerState}) => {
                         flexGrow: 1
                     }}/>
                 <Typography variant="h5">
-                    $1000000
+                    ${value.cart.subtotal}
                 </Typography>
             </Stack>
             <Stack direction="row" spacing={2}>

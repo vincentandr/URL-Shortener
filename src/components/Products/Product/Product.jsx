@@ -13,7 +13,7 @@ const Product = ({product}) => {
 
     const handleCartClick = (productId, qty) => {
         // Add +1 to qty if item already exists in cart
-        let obj = value.cart.find(item => item.product_id === productId)
+        let obj = value.cart.products.find(item => item.product_id === productId)
 
         if (obj !== undefined){
            qty += obj.qty

@@ -1,14 +1,47 @@
-export const cart = (state = [], action) => {
+export const cart = (state = { products: [], subtotal: 0 }, action) => {
   switch (action.type) {
-    case "FETCH_CART":
-      return action.payload;
-    case "ADD_ITEM":
-      return action.payload;
-    case "REMOVE_ITEM":
-      return action.payload;
-    case "REMOVE_ALL":
-      return action.payload;
-    case "CHECKOUT":
+    case "FETCH_CART": {
+      const data = action.payload;
+      let newProducts = [...state.products];
+      newProducts = data.products;
+      return {
+        ...state,
+        products: newProducts,
+        subtotal: data.subtotal,
+      };
+    }
+    case "ADD_ITEM": {
+      const data = action.payload;
+      let newProducts = [...state.products];
+      newProducts = data.products;
+      return {
+        ...state,
+        products: newProducts,
+        subtotal: data.subtotal,
+      };
+    }
+    case "REMOVE_ITEM": {
+      const data = action.payload;
+      let newProducts = [...state.products];
+      newProducts = data.products;
+      return {
+        ...state,
+        products: newProducts,
+        subtotal: data.subtotal,
+      };
+    }
+    case "REMOVE_ALL": {
+      const data = action.payload;
+      let newProducts = [...state.products];
+      newProducts = data.products;
+      return {
+        ...state,
+        products: newProducts,
+        subtotal: data.subtotal,
+      };
+    }
+    case "CHECKOUT": {
+    }
     default:
       return state;
   }

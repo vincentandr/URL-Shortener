@@ -6,13 +6,12 @@ const fetchCart = () => async (dispatch) => {
     const uri = config.apiUrl + "/cart/user1";
     const { data } = await axios.get(uri);
 
-    let result = [];
-
-    if (Object.keys(data).length !== 0) {
-      result = data.products;
+    if (Object.keys(data).length === 0) {
+      data["products"] = [];
+      data["subtotal"] = 0;
     }
 
-    dispatch({ type: "FETCH_CART", payload: result });
+    dispatch({ type: "FETCH_CART", payload: data });
   } catch (error) {
     console.log(error);
   }
@@ -32,7 +31,7 @@ const addCartItem = (productId, qty) => async (dispatch) => {
       }
     );
 
-    dispatch({ type: "ADD_ITEM", payload: data.products });
+    dispatch({ type: "ADD_ITEM", payload: data });
   } catch (error) {
     console.log(error);
   }
@@ -44,31 +43,29 @@ const removeCartItem = (productId) => async (dispatch) => {
 
     const { data } = await axios.delete(uri);
 
-    let result = [];
-
-    if (Object.keys(data).length !== 0) {
-      result = data.products;
+    if (Object.keys(data).length === 0) {
+      data["products"] = [];
+      data["subtotal"] = 0;
     }
 
-    dispatch({ type: "REMOVE_ITEM", payload: result });
+    dispatch({ type: "REMOVE_ITEM", payload: data });
   } catch (error) {
     console.log(error);
   }
 };
 
-const removeAllCartItems = (item) => async (dispatch) => {
+const removeAllCartItems = () => async (dispatch) => {
   try {
     const uri = config.apiUrl + "/cart/user1";
 
     const { data } = await axios.delete(uri);
 
-    let result = [];
-
-    if (Object.keys(data).length !== 0) {
-      result = data.products;
+    if (Object.keys(data).length === 0) {
+      data["products"] = [];
+      data["subtotal"] = 0;
     }
 
-    dispatch({ type: "REMOVE_ALL", payload: result });
+    dispatch({ type: "REMOVE_ALL", payload: data });
   } catch (error) {
     console.log(error);
   }
