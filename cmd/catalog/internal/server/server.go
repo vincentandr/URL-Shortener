@@ -43,7 +43,7 @@ func (s *Server) Grpc_GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb
 	return &products, nil
 }
 
-func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRequest) (*pb.GetProductsByIdsResponse, error) {
+func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsByIdsRequest) (*pb.GetProductsResponse, error) {
 	// Convert string to ObjectID for collection filter
 	productIds := make([]primitive.ObjectID, len(in.ProductIds))
 
@@ -61,7 +61,7 @@ func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsBy
 		return nil, err
 	}
 
-	products := pb.GetProductsByIdsResponse{}
+	products := pb.GetProductsResponse{}
 
 	// Must have capital letter and bson tag to be able to decode properly
 	res := model.Product{}
@@ -73,7 +73,10 @@ func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsBy
 			return nil, fmt.Errorf("failed to decode document: %v", err)
 		}
 
-		product := &pb.GetProductByIdsResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price}
+		fmt.Println("heeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+		fmt.Println(res)
+
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
 
 		products.Products = append(products.Products, product)
 	}

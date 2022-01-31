@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vincentandr/shopping-microservice/cmd/cart/internal/server"
 	pb "github.com/vincentandr/shopping-microservice/internal/proto/cart"
+	catalogpb "github.com/vincentandr/shopping-microservice/internal/proto/catalog"
 )
 
 // Test to get item ids from cart items map
@@ -48,14 +49,18 @@ func TestGetMapKeys(t *testing.T) {
 
 // Append quantity purchased to the product details and return it as response
 func TestAppendItemToResponse(t *testing.T) {
-	productMaps := []map[string]map[string]string{
+	productSlices := []catalogpb.GetProductsResponse{
 		{
-		"itemid1": {"name": "itemname1", "price": "800", "desc":"desc1", "image":"image1"},
-		"itemid2": {"name": "itemname2", "price": "45", "desc":"desc2", "image":"image2"},
-		"itemid3": {"name": "itemname3", "price": "120", "desc":"desc3", "image":"image3"},
+			Products: []*catalogpb.GetProductResponse{
+				{ProductId: "itemid1", Name: "itemname1", Price: 800, Qty: 50, Desc: "desc1", Image: "image1"},
+				{ProductId: "itemid2", Name: "itemname2", Price: 45, Qty: 75, Desc: "desc1", Image: "image1"},
+				{ProductId: "itemid3", Name: "itemname3", Price: 120, Qty: 100, Desc: "desc1", Image: "image1"},
+			},
 		},
 		{
-			"itemid1": {"name": "itemname1", "price": "800", "desc":"desc1", "image":"image1"},
+			Products: []*catalogpb.GetProductResponse{
+				{ProductId: "itemid1", Name: "itemname1", Price: 800, Qty: 50, Desc: "desc1", Image: "image1"},
+			},
 		},
 		{},
 	}
@@ -77,27 +82,30 @@ func TestAppendItemToResponse(t *testing.T) {
 			Products: []*pb.ItemResponse{
 				{
 					ProductId: "itemid1",
-					Name: productMaps[0]["itemid1"]["name"],
+					Name: productSlices[0].Products[0].Name,
 					Price: 800,
 					Qty: 36,
-					Desc: productMaps[0]["itemid1"]["desc"],
-					Image: productMaps[0]["itemid1"]["image"],
+					Stock: 50,
+					Desc: productSlices[0].Products[0].Desc,
+					Image: productSlices[0].Products[0].Image,
 				},
 				{
 					ProductId: "itemid2",
-					Name: productMaps[0]["itemid2"]["name"],
+					Name: productSlices[0].Products[1].Name,
 					Price: 45,
 					Qty: 8,
-					Desc: productMaps[0]["itemid2"]["desc"],
-					Image: productMaps[0]["itemid2"]["image"],
+					Stock: 75,
+					Desc: productSlices[0].Products[1].Desc,
+					Image: productSlices[0].Products[1].Image,
 				},
 				{
 					ProductId: "itemid3",
-					Name: productMaps[0]["itemid3"]["name"],
+					Name: productSlices[0].Products[2].Name,
 					Price: 120,
 					Qty: 12,
-					Desc: productMaps[0]["itemid3"]["desc"],
-					Image: productMaps[0]["itemid3"]["image"],
+					Stock: 100,
+					Desc: productSlices[0].Products[2].Desc,
+					Image: productSlices[0].Products[2].Image,
 				},
 			},
 		},
@@ -105,11 +113,12 @@ func TestAppendItemToResponse(t *testing.T) {
 			Products: []*pb.ItemResponse{
 				{
 					ProductId: "itemid1",
-					Name: productMaps[1]["itemid1"]["name"],
+					Name: productSlices[1].Products[0].Name,
 					Price: 800,
 					Qty: 36,
-					Desc: productMaps[1]["itemid1"]["desc"],
-					Image: productMaps[1]["itemid1"]["image"],
+					Stock: 50,
+					Desc: productSlices[1].Products[0].Desc,
+					Image: productSlices[1].Products[0].Image,
 				},
 			},
 		},
@@ -118,25 +127,25 @@ func TestAppendItemToResponse(t *testing.T) {
 
 	tcs := []struct{
 		name string
-		products map[string]map[string]string
+		products *catalogpb.GetProductsResponse
 		cartItems map[string]string
 		expected *pb.ItemsResponse
 	}{
 		{
 			"append more than 1 items",
-			productMaps[0],
+			&productSlices[0],
 			qtyMaps[0],
 			&expectedSlices[0],
 		},
 		{
 			"append just 1 item",
-			productMaps[1],
+			&productSlices[1],
 			qtyMaps[1],
 			&expectedSlices[1],
 		},
 		{
 			"append no item",
-			productMaps[2],
+			&productSlices[2],
 			qtyMaps[2],
 			&expectedSlices[2],
 		},

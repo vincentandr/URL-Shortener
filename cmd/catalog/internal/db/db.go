@@ -13,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // embed catalog.csv into compiled go binary
@@ -116,16 +115,9 @@ func (r *Repository) GetProducts(ctx context.Context) (*mongo.Cursor, error){
 
 func (r *Repository) GetProductsByIds(ctx context.Context, ids []primitive.ObjectID) (*mongo.Cursor, error){
 	// Set what fields to get / select
-	projection := bson.D{
-		{Key:"_id", Value: 1},
-		{Key:"name", Value: 1},
-		{Key:"price", Value: 1},
-	}
-
 	cursor, err := r.Collection.Find(
 		ctx, 
 		bson.M{"_id": bson.M{"$in": ids}},
-		options.Find().SetProjection(projection),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("GetProducts Select query failed: %v", err)

@@ -25,41 +25,11 @@ func (r *Repository) GetCartItems(ctx context.Context, userId string) (map[strin
 	return res, nil
 }
 
-func (r *Repository) GetCartItemsDetails(ctx context.Context, productIds []string) (map[string]map[string]string, error) {
-    cmds := map[string]*redis.StringStringMapCmd{}
-
-    // Get all product details by product id
-    pipeline := r.Conn.Pipeline()
-    for _, id := range productIds{
-        cmds[id] = pipeline.HGetAll(ctx, id)
-    }
-
-    _, err := pipeline.Exec(ctx)
-    if err != nil {
-        return nil, fmt.Errorf("failed to execute redis pipeline: %v", err)
-    }
-
-    // First key is product ID, second key is field name (price, desc, image)
-    res := make(map[string]map[string]string)
-    for k, v := range cmds {
-        details, err := v.Result()
-        if err != nil {
-            return nil, fmt.Errorf("failed to get cart items details from pipeline: %v", err)
-        }
-
-        res[k] = details
-    }
-
-    return res, nil
-}
-
-func (r *Repository) AddOrUpdateCart(ctx context.Context, duration time.Duration, userId string, productId string, name string, newQty int, price float32, desc string, image string) (map[string]string, error) {
+func (r *Repository) AddOrUpdateCart(ctx context.Context, duration time.Duration, userId string, productId string, newQty int) (map[string]string, error) {
     pipeline := r.Conn.Pipeline()
 
     pipeline.HSet(ctx, userId, productId, newQty)
     pipeline.Expire(ctx, userId, duration)
-    pipeline.HSet(ctx, productId, "name", name, "price", price, "desc", desc, "image", image)
-    pipeline.Expire(ctx, productId, duration)
 
     _, err := pipeline.Exec(ctx)
     if err != nil {

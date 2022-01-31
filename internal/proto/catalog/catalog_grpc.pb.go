@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CatalogServiceClient interface {
 	Grpc_GetProducts(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*GetProductsResponse, error)
-	Grpc_GetProductsByIds(ctx context.Context, in *GetProductsByIdsRequest, opts ...grpc.CallOption) (*GetProductsByIdsResponse, error)
+	Grpc_GetProductsByIds(ctx context.Context, in *GetProductsByIdsRequest, opts ...grpc.CallOption) (*GetProductsResponse, error)
 	Grpc_GetProductsByName(ctx context.Context, in *GetProductsByNameRequest, opts ...grpc.CallOption) (*GetProductsResponse, error)
 }
 
@@ -40,8 +40,8 @@ func (c *catalogServiceClient) Grpc_GetProducts(ctx context.Context, in *EmptyRe
 	return out, nil
 }
 
-func (c *catalogServiceClient) Grpc_GetProductsByIds(ctx context.Context, in *GetProductsByIdsRequest, opts ...grpc.CallOption) (*GetProductsByIdsResponse, error) {
-	out := new(GetProductsByIdsResponse)
+func (c *catalogServiceClient) Grpc_GetProductsByIds(ctx context.Context, in *GetProductsByIdsRequest, opts ...grpc.CallOption) (*GetProductsResponse, error) {
+	out := new(GetProductsResponse)
 	err := c.cc.Invoke(ctx, "/catalogpb.CatalogService/Grpc_GetProductsByIds", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (c *catalogServiceClient) Grpc_GetProductsByName(ctx context.Context, in *G
 // for forward compatibility
 type CatalogServiceServer interface {
 	Grpc_GetProducts(context.Context, *EmptyRequest) (*GetProductsResponse, error)
-	Grpc_GetProductsByIds(context.Context, *GetProductsByIdsRequest) (*GetProductsByIdsResponse, error)
+	Grpc_GetProductsByIds(context.Context, *GetProductsByIdsRequest) (*GetProductsResponse, error)
 	Grpc_GetProductsByName(context.Context, *GetProductsByNameRequest) (*GetProductsResponse, error)
 	mustEmbedUnimplementedCatalogServiceServer()
 }
@@ -75,7 +75,7 @@ type UnimplementedCatalogServiceServer struct {
 func (UnimplementedCatalogServiceServer) Grpc_GetProducts(context.Context, *EmptyRequest) (*GetProductsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Grpc_GetProducts not implemented")
 }
-func (UnimplementedCatalogServiceServer) Grpc_GetProductsByIds(context.Context, *GetProductsByIdsRequest) (*GetProductsByIdsResponse, error) {
+func (UnimplementedCatalogServiceServer) Grpc_GetProductsByIds(context.Context, *GetProductsByIdsRequest) (*GetProductsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Grpc_GetProductsByIds not implemented")
 }
 func (UnimplementedCatalogServiceServer) Grpc_GetProductsByName(context.Context, *GetProductsByNameRequest) (*GetProductsResponse, error) {
