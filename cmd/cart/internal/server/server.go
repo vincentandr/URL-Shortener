@@ -114,32 +114,13 @@ func (s *Server) Grpc_RemoveItemFromCart(ctx context.Context, in *pb.RemoveItemF
 }
 
 func (s *Server) Grpc_RemoveAllCartItems(ctx context.Context, in *pb.RemoveAllCartItemsRequest) (*pb.ItemsResponse, error) {
-	res, err := s.Repo.RemoveAllCartItems(ctx, in.UserId)
+	_, err := s.Repo.RemoveAllCartItems(ctx, in.UserId)
 	if err != nil{
 		return nil, err
 	}
 
-	// Return empty response if there is no items in cart
-	if len(res) == 0 {
-		return &pb.ItemsResponse{}, nil
-	}
-
-    // Get Product ID Keys from map
-	ids := GetMapKeys(res)
-
-	// RPC call catalog server to get cart products' names
-	products, err := s.CatalogClient.Grpc_GetProductsByIds(ctx, &catalogpb.GetProductsByIdsRequest{ProductIds: ids})
-	if err != nil {
-		return nil, err
-	}
-
-	// Return response in format product id, product name, qty, desc, and image in cart
-	items, err := AppendItemToResponse(products, res)
-	if err != nil{
-		return nil, err
-	}
-
-    return items, nil
+	// Return empty response since there is no items in cart
+	return &pb.ItemsResponse{}, nil
 }
 
 func (s *Server) Grpc_Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb.CheckoutResponse, error) {
@@ -177,6 +158,7 @@ func GetMapKeys(hm map[string]string) ([]string) {
 
 func AppendItemToResponse(catalogRes *catalogpb.GetProductsResponse, hm map[string]string) (*pb.ItemsResponse, error){
 	items := pb.ItemsResponse{}
+	var subtotal float32
 
 	for _, prod := range catalogRes.Products {
 		qty, err := strconv.Atoi(hm[prod.ProductId])
@@ -187,7 +169,12 @@ func AppendItemToResponse(catalogRes *catalogpb.GetProductsResponse, hm map[stri
 		item := &pb.ItemResponse{ProductId: prod.ProductId, Name: prod.Name, Price: prod.Price, Qty: int32(qty), Stock: prod.Qty, Desc: prod.Desc, Image: prod.Image}
 
 		items.Products = append(items.Products, item)
+
+		// Calc subtotal
+		subtotal += item.Price * float32(item.Qty)	
 	}
+
+	items.Subtotal = subtotal
 
 	return &items, nil
 }
