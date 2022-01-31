@@ -1,12 +1,13 @@
 import React from "react";
 import {useState, useContext} from "react";
 import {useDispatch} from "react-redux";
-import {Box, IconButton, Container, Typography, Button, Table, TableContainer, TableBody, TableRow, TableCell, Drawer, Stack} from "@mui/material"
+import {Box, IconButton, Container, Typography, Button, Table, TableContainer, TableBody, TableRow, TableCell, Drawer, Stack, ButtonGroup} from "@mui/material"
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import {DeleteForeverOutlined, Close} from "@mui/icons-material"
+import {DeleteForeverOutlined, Close, Add, Remove} from "@mui/icons-material"
 
-import { removeCartItem, removeAllCartItems } from "../../actions";
+import { removeCartItem, removeAllCartItems, addCartItem } from "../../actions";
 import {CartContext} from "../../pages/App"
+
 
 const Cart = ({drawerState}) => {
     const theme = createTheme({
@@ -17,10 +18,32 @@ const Cart = ({drawerState}) => {
         },
     });
 
+    const disabledButtonTheme = createTheme({
+        palette: {
+            action: {
+                disabledBackground: 'inherit',
+                disabled: 'inherit'
+            }
+        }
+    });
+
     const value = useContext(CartContext)
     const dispatch = useDispatch()
 
     const isEmpty = !value.cart.length
+
+    const handleQty = (op, productId, qty) => {
+        // Add +1 to qty if item already exists in cart
+        let obj = value.cart.find(item => item.product_id === productId)
+
+        if (op === "increment"){
+            obj.qty = obj.qty + qty
+        } else if (op === "decrement"){
+            obj.qty = obj.qty - qty
+        }
+
+        dispatch(addCartItem(productId, obj.qty))
+    }
     
     const EmptyCart = () => (
         <Typography variant="h6">
@@ -39,7 +62,6 @@ const Cart = ({drawerState}) => {
                         key={product.product_id}
                         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                         >
-                            {console.log(product)}
                             <TableCell aling="center">
                                 <Box component="img" sx={{
                                     maxHeight: { xs: 167, md: 167 },
@@ -56,16 +78,27 @@ const Cart = ({drawerState}) => {
                                     ${product.price}
                                 </Typography>
                                 <Typography variant="subtitle2">
-                                    Qty: {product.qty}
-                                </Typography>
-                                <Typography variant="subtitle2">
-                                    {product.desc}
+                                    <ButtonGroup variant="outlined" size="small" aria-label="outlined primary button group">
+                                        <Button onClick={() => handleQty(
+                                            "increment",
+                                            product.product_id,
+                                            1,
+                                        )}><Add/></Button>
+                                        <ThemeProvider theme={disabledButtonTheme}>
+                                            <Button disabled>{product.qty}</Button>
+                                        </ThemeProvider>
+                                        <Button onClick={() => handleQty(
+                                            "decrement",
+                                            product.product_id,
+                                            1,
+                                        )}><Remove/></Button>
+                                    </ButtonGroup>
                                 </Typography>
                             </TableCell>
-                            <TableCell align="right">${product.price * product.qty}</TableCell>
                             <TableCell align="right">
+                                <div>${product.price * product.qty}</div>
                                 <IconButton aria-label="Delete item" onClick={() => dispatch(removeCartItem(product.product_id))}>
-                                    <DeleteForeverOutlined fontSize="large"/>
+                                    <DeleteForeverOutlined/>
                                 </IconButton>
                             </TableCell>
                         </TableRow>
@@ -73,6 +106,17 @@ const Cart = ({drawerState}) => {
                     </TableBody>
                 </Table>
             </TableContainer>
+            <Stack direction="row" pb={2}>
+                <Typography variant="h5">
+                    Subtotal
+                </Typography>
+                    <Box sx={{
+                        flexGrow: 1
+                    }}/>
+                <Typography variant="h5">
+                    $1000000
+                </Typography>
+            </Stack>
             <Stack direction="row" spacing={2}>
                 <Button type="button" variant="outlined" color="inherit" fullWidth onClick={() => dispatch(removeAllCartItems())}>Empty Cart</Button>
                 <ThemeProvider theme={theme}>

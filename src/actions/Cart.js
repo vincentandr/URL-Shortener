@@ -18,20 +18,16 @@ const fetchCart = () => async (dispatch) => {
   }
 };
 
-const addCartItem = (item) => async (dispatch) => {
+const addCartItem = (productId, qty) => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/cart/user1/" + item.productId;
+    const uri = config.apiUrl + "/cart/user1/" + productId;
 
     const { data } = await axios.put(
       uri,
       {},
       {
         params: {
-          name: item.name,
-          qty: item.qty,
-          price: item.price,
-          desc: item.desc,
-          image: item.image,
+          qty: qty,
         },
       }
     );

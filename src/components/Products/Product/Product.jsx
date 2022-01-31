@@ -11,7 +11,7 @@ const Product = ({product}) => {
     const dispatch = useDispatch()
     const value = useContext(CartContext)
 
-    const handleCartClick = (productId, name, qty, price, desc, image) => {
+    const handleCartClick = (productId, qty) => {
         // Add +1 to qty if item already exists in cart
         let obj = value.cart.find(item => item.product_id === productId)
 
@@ -19,16 +19,7 @@ const Product = ({product}) => {
            qty += obj.qty
         }
 
-        let item = {
-            productId: productId,
-            name: name,
-            qty: qty,
-            price: price,
-            desc: desc,
-            image: image,
-        }
-
-        dispatch(addCartItem(item)).then((result) => {
+        dispatch(addCartItem(productId, qty)).then((result) => {
             value.onClickDrawer(true)
         })
     }
@@ -56,11 +47,7 @@ const Product = ({product}) => {
                 }}/>
                 <IconButton aria-label="Add to cart" onClick={() => handleCartClick(
                     product.product_id,
-                    product.name,
-                    1,
-                    product.price,
-                    product.desc,
-                    product.image)}>
+                    1,)}>
                     <AddShoppingCart fontSize="large"/>
                 </IconButton>
             </CardActions>
