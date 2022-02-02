@@ -2,7 +2,7 @@ import React from "react";
 import {Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Button} from "@mui/material"
 
 
-const Login = ({loginState, onClickLogin}) => {
+const Login = ({login}) => {
     const handleSubmit = () => {
         
     }
@@ -11,8 +11,8 @@ const Login = ({loginState, onClickLogin}) => {
         <form onSubmit={handleSubmit}>
             <Dialog 
                 disablePortal
-                open={loginState}
-                onClose={() => onClickLogin(false)}
+                open={login.state}
+                onClose={() => login.onClick(false)}
                 fullWidth={true}
                 maxWidth="xs"
             >

@@ -8,8 +8,13 @@ import {DeleteForeverOutlined, Close, Add, Remove} from "@mui/icons-material"
 import { removeCartItem, removeAllCartItems, addCartItem, checkout } from "../../actions";
 import { formatCurrency } from "../../helpers/Utils";
 
+const EmptyCart = () => (
+    <Typography variant="h6">
+        You have no item in your shopping cart. Shop now!
+    </Typography>
+)
 
-const Cart = ({cart, drawer}) => {
+const FilledCart = ({cart}) => {
     const theme = createTheme({
         palette: {
             primary: {
@@ -29,8 +34,6 @@ const Cart = ({cart, drawer}) => {
 
     const dispatch = useDispatch()
 
-    const isEmpty = !cart.products.length
-
     const handleQty = (op, productId, qty) => {
         // Add +1 to qty if item already exists in cart
         let obj = cart.products.find(item => item.product_id === productId)
@@ -49,15 +52,8 @@ const Cart = ({cart, drawer}) => {
             dispatch(addCartItem(productId, qty))
         }
     }
-    
-    const EmptyCart = () => (
-        <Typography variant="h6">
-            You have no item in your shopping cart. Shop now!
-        </Typography>
-    )
 
-
-    const FilledCart = () => (
+    return (
         <>
             <TableContainer>
                 <Table aria-label="simple table">
@@ -130,6 +126,10 @@ const Cart = ({cart, drawer}) => {
             </Stack>
         </>
     )
+}
+
+const Cart = ({cart, drawer}) => {
+    const isEmpty = !cart.products.length
 
     return(
         <Drawer
@@ -146,7 +146,7 @@ const Cart = ({cart, drawer}) => {
                         Close
                     </Button>
                 </Stack>
-                {isEmpty ? <EmptyCart/> : <FilledCart/>}
+                {isEmpty ? <EmptyCart/> : <FilledCart cart={cart}/>}
             </Container>
         </Drawer>
     )
