@@ -1,5 +1,8 @@
 const formatCurrency = (num) => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 export { formatCurrency };

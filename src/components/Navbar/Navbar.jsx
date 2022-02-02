@@ -53,7 +53,7 @@ const Bar = ({cart, drawer, login}) => {
                             variant="outlined"
                         />
                         <IconButton aria-label="Show cart items" color="inherit" onClick={() => drawer.onClick(true)}>
-                            <Badge badgeContent={cart.length} color="secondary">
+                            <Badge badgeContent={cart.products.length} color="secondary">
                                 <ShoppingCart/>
                             </Badge>
                         </IconButton>
