@@ -4,7 +4,7 @@ import {Grid, Snackbar, Alert, Box} from "@mui/material";
 
 import Product from "./Product/Product";
 
-const Products = ({products}) => {
+const Products = ({products, cart, onClickDrawer}) => {
     const [snackPack, setSnackPack] = useState([]);
     const [open, setOpen] = useState(false);
     const [messageInfo, setMessageInfo] = useState(undefined);
@@ -52,7 +52,7 @@ const Products = ({products}) => {
                 <Grid container justify="center" spacing={4}>
                     {products.map((product) => (
                         <Grid item key={product.product_id} xs={6} md={4} lg={3}>
-                            <Product product={product} setSnackPack={setSnackPack}/>
+                            <Product product={product} cart={cart} onClickDrawer={onClickDrawer} setSnackPack={setSnackPack}/>
                         </Grid>
                     ))}
                 </Grid>

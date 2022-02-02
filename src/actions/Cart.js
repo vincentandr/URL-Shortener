@@ -71,4 +71,16 @@ const removeAllCartItems = () => async (dispatch) => {
   }
 };
 
-export { fetchCart, addCartItem, removeCartItem, removeAllCartItems };
+const checkout = () => async (dispatch) => {
+  try {
+    const uri = config.apiUrl + "/cart/checkout/user1";
+
+    const { data } = await axios.get(uri);
+
+    dispatch({ type: "CHECKOUT", payload: data });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export { fetchCart, addCartItem, removeCartItem, removeAllCartItems, checkout };

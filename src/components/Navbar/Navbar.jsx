@@ -1,8 +1,9 @@
 import React from "react";
+import { useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 import {Toolbar, IconButton, Badge, Box, Typography, AppBar, TextField, InputAdornment, Stack} from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import {ShoppingCart, Search, AccountCircle} from "@mui/icons-material";
-import { useDispatch } from "react-redux";
 
 import { searchProducts } from "../../actions/Products";
 
@@ -13,7 +14,7 @@ const theme = createTheme({
 });
 
 
-const Navbar = ({totalItems, onClickDrawer}) => {
+const Navbar = ({totalItems, onClickDrawer, onClickLogin}) => {
     const dispatch = useDispatch();
 
     const search = (e) => {
@@ -27,7 +28,9 @@ const Navbar = ({totalItems, onClickDrawer}) => {
                 mr: "5%",
             }}>
                 <ThemeProvider theme={theme}>
-                    <Typography variant="h4" color="inherit">
+                    <Typography component={Link} to="/" variant="h4" color="inherit" sx={{
+                        textDecoration: "none"
+                    }}>
                         Microshopping
                     </Typography>
                 </ThemeProvider>
@@ -54,7 +57,7 @@ const Navbar = ({totalItems, onClickDrawer}) => {
                             <ShoppingCart/>
                         </Badge>
                     </IconButton>
-                    <IconButton aria-label="Show cart items"  color="inherit">
+                    <IconButton aria-label="Show cart items"  color="inherit" onClick={() => onClickLogin(true)}>
                         <AccountCircle/>
                     </IconButton>
                 </Stack>

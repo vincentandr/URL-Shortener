@@ -41,6 +41,7 @@ export const cart = (state = { products: [], subtotal: 0 }, action) => {
       };
     }
     case "CHECKOUT": {
+      const data = action.payload;
     }
     default:
       return state;
