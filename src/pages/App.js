@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Routes, Route, BrowserRouter as Router } from "react-router-dom";
 
-import { Products, Navbar, Payment, Cart } from "../components";
+import { Products, Navbar, Payment } from "../components";
 import { fetchProducts, fetchCart } from "../actions";
 
 const getSelectors = (state) => ({

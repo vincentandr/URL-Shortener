@@ -45,4 +45,4 @@ const Login = ({login}) => {
     )
 }
 
-export default Login;
+export default React.memo(Login);
