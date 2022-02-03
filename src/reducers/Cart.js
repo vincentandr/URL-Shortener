@@ -1,4 +1,7 @@
-export const cart = (state = { products: [], subtotal: 0 }, action) => {
+export const cart = (
+  state = { products: [], subtotal: 0, order_id: "" },
+  action
+) => {
   switch (action.type) {
     case "FETCH_CART": {
       const data = action.payload;
@@ -42,6 +45,10 @@ export const cart = (state = { products: [], subtotal: 0 }, action) => {
     }
     case "CHECKOUT": {
       const data = action.payload;
+      return {
+        ...state,
+        order_id: data.order_id,
+      };
     }
     default:
       return state;

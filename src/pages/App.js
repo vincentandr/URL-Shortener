@@ -44,7 +44,11 @@ function App() {
               </>
             }
           />
-          <Route exact path="/payment" element={<Payment />}></Route>
+          <Route
+            exact
+            path="/payment"
+            element={<Payment cart={cart} />}
+          ></Route>
         </Routes>
       </div>
     </Router>

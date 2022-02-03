@@ -13,13 +13,16 @@ const Cart = ({cart, drawer}) => {
             anchor="right"
             open={drawer.state}
             onClose={() => drawer.onClick(false)}
+            PaperProps={{
+                sx: { width: "30%" },
+            }}
         >
             <Container>
                 <Stack direction="row" spacing={2}>
                     <Typography variant="h4" width="100%">
                         Shopping Cart
                     </Typography>
-                    <Button variant="text" size="large" startIcon={<Close />} onClick={() => drawer.onClick(false)}>
+                    <Button variant="text" color="inherit" size="large" startIcon={<Close />} onClick={() => drawer.onClick(false)}>
                         Close
                     </Button>
                 </Stack>
