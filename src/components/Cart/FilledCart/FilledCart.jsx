@@ -56,8 +56,11 @@ const FilledCart = ({cart}) => {
     }
 
     return (
-        <>
-            <List>
+        <Stack directon="row" spacing={2}>
+            <List sx={{
+                maxHeight: "30vw",
+                overflow: "auto",
+            }}>
                 {cart.products.map((product) => (
                     <ListItem key={product.product_id}>
                         <Box component="img" sx={{
@@ -101,20 +104,19 @@ const FilledCart = ({cart}) => {
                     </ListItem>
                 ))}
                 <Divider/>
-                <ListItem>
-                    <ListItemText primary="Subtotal"/>
-                    <Typography variant="subtitle1">
-                        ${formatCurrency(cart.subtotal)}
-                    </Typography>
-                </ListItem>
             </List>
-            <Stack direction="row" spacing={2} pb={2}>
-                <Button type="button" variant="outlined" color="inherit" fullWidth onClick={() => dispatch(removeAllCartItems())}>Empty Cart</Button>
-                <ThemeProvider theme={theme}>
-                    <Button type="button" variant="contained" color="primary" fullWidth onClick={handleCheckout}>Checkout</Button>
-                </ThemeProvider>
-            </Stack>
-        </>
+            <Box sx={{
+                display:"flex",
+                justifyContent: "space-between",
+            }}>
+                <Typography variant="subtitle1">Subtotal</Typography>
+                <Typography variant="subtitle1">${formatCurrency(cart.subtotal)}</Typography>
+            </Box>
+            <ThemeProvider theme={theme}>
+                <Button type="button" variant="contained" color="primary" fullWidth onClick={handleCheckout}>Checkout</Button>
+            </ThemeProvider>
+            <Button type="button" variant="outlined" color="inherit" fullWidth onClick={() => dispatch(removeAllCartItems())}>Empty Cart</Button>
+        </Stack>
     )
 }
 

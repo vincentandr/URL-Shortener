@@ -6,7 +6,7 @@ const Review = ({cart}) => {
     return (
         <>
             <Typography variant="h6" >Order Summary</Typography>
-            <List style={{
+            <List sx={{
                 maxHeight: "20vw",
                 overflow: "auto",
             }}>
