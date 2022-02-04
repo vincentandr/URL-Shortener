@@ -2,7 +2,7 @@ import React from "react";
 import {useState} from "react";
 import {useDispatch} from "react-redux";
 import {useNavigate} from "react-router-dom";
-import {Box, Typography, Button, Stack, ButtonGroup, List, ListItem, ListItemText, ListItemButton, Divider} from "@mui/material"
+import {Box, Typography, Button, Stack, ButtonGroup, List, ListItem, ListItemText, Divider} from "@mui/material"
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import {DeleteForeverOutlined, Add, Remove} from "@mui/icons-material"
 
@@ -61,6 +61,7 @@ const FilledCart = ({cart}) => {
                 {cart.products.map((product) => (
                     <ListItem key={product.product_id}>
                         <Box component="img" sx={{
+                                    minWidth: {xs: 50, md: 75},
                                     maxHeight: { xs: 50, md: 75 },
                                     maxWidth: { xs: 50, md: 75 },
                                     }}
@@ -78,12 +79,6 @@ const FilledCart = ({cart}) => {
                                 ${product.qty === undefined ? 0 : formatCurrency(product.price * product.qty)}
                             </Typography>
                             <ButtonGroup variant="outlined" size="small" aria-label="outlined primary button group">
-                                <Button color="inherit" onClick={() => dispatch(removeCartItem(product.product_id))}>
-                                    <DeleteForeverOutlined/>
-                                </Button>
-                                <ThemeProvider theme={disabledButtonTheme}>
-                                    <Button disabled>{product.qty === undefined ? 0 : product.qty}</Button>
-                                </ThemeProvider>
                                 <Button color="inherit" onClick={() => handleQty(
                                     "increment",
                                     product.product_id,
@@ -94,6 +89,12 @@ const FilledCart = ({cart}) => {
                                     product.product_id,
                                     1,
                                 )}><Remove/></Button>
+                                <ThemeProvider theme={disabledButtonTheme}>
+                                    <Button disabled>{product.qty === undefined ? 0 : product.qty}</Button>
+                                </ThemeProvider>
+                                <Button color="inherit" onClick={() => dispatch(removeCartItem(product.product_id))}>
+                                    <DeleteForeverOutlined/>
+                                </Button>
                                 
                             </ButtonGroup>
                         </div>
