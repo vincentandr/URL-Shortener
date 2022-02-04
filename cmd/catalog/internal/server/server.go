@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	db "github.com/vincentandr/shopping-microservice/cmd/catalog/internal/db"
 	rmqCatalog "github.com/vincentandr/shopping-microservice/cmd/catalog/internal/pubsub"
@@ -35,7 +36,7 @@ func (s *Server) Grpc_GetProducts(ctx context.Context, in *pb.EmptyRequest) (*pb
 			return nil, fmt.Errorf("failed to decode document: %v", err)
 		}
 
-		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: strings.Title(res.Name), Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
 
 		products.Products = append(products.Products, product)
 	}
@@ -73,10 +74,7 @@ func (s *Server) Grpc_GetProductsByIds(ctx context.Context, in *pb.GetProductsBy
 			return nil, fmt.Errorf("failed to decode document: %v", err)
 		}
 
-		fmt.Println("heeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-		fmt.Println(res)
-
-		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: strings.Title(res.Name), Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
 
 		products.Products = append(products.Products, product)
 	}
@@ -103,7 +101,7 @@ func (s *Server) Grpc_GetProductsByName(ctx context.Context, in *pb.GetProductsB
 			return nil, fmt.Errorf("failed to decode document: %v", err)
 		}
 
-		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: res.Name, Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
+		product := &pb.GetProductResponse{ProductId: res.Product_id.Hex(), Name: strings.Title(res.Name), Price: res.Price, Qty: int32(res.Qty), Desc: res.Desc, Image: res.Image}
 
 		products.Products = append(products.Products, product)
 	}

@@ -166,12 +166,12 @@ func AppendItemToResponse(catalogRes *catalogpb.GetProductsResponse, hm map[stri
 			return nil, fmt.Errorf("failed to convert qty from string to int: %v", err)
 		}
 
+		// Calc subtotal
+		subtotal += prod.Price * float32(qty)	
+
 		item := &pb.ItemResponse{ProductId: prod.ProductId, Name: prod.Name, Price: prod.Price, Qty: int32(qty), Stock: prod.Qty, Desc: prod.Desc, Image: prod.Image}
 
 		items.Products = append(items.Products, item)
-
-		// Calc subtotal
-		subtotal += item.Price * float32(item.Qty)	
 	}
 
 	items.Subtotal = subtotal

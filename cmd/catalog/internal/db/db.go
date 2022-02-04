@@ -78,7 +78,7 @@ func SeedCollection(ctx context.Context, r *Repository) error {
 				break
 			}
 
-			name := record[0]
+			name := strings.ToLower(record[0])
 			price, _ := strconv.Atoi(record[1])
 			qty, _ := strconv.Atoi(record[2])
 			desc := record[3]

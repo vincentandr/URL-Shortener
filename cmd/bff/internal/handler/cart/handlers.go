@@ -50,7 +50,8 @@ func (c *GrpcClient) AddOrUpdateCartQty(w http.ResponseWriter, r *http.Request) 
 	args := mux.Vars(r)
 
 	qty, err := strconv.Atoi(r.URL.Query().Get("qty"))
-	if err != nil {
+	// Check if input qty is non numeric and <= 0
+	if err != nil || qty <= 0 {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

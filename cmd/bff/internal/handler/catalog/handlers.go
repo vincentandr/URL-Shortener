@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	intf "github.com/vincentandr/shopping-microservice/cmd/bff/internal/interface/catalog"
@@ -42,7 +43,7 @@ func (c *GrpcClient) GetProductsByName(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3 * time.Second)
 	defer cancel()
 
-	name := r.URL.Query().Get("name")
+	name := strings.ToLower(r.URL.Query().Get("name"))
 
 	products, err := c.Client.Grpc_GetProductsByName(ctx, &pb.GetProductsByNameRequest{Name: name})
 	if err != nil {
