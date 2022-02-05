@@ -1,9 +1,8 @@
 import axios from "axios";
-import config from "./config";
 
 const fetchCart = () => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/cart/user1";
+    const uri = process.env.REACT_APP_SERVER_API_URL + "/cart/user1";
     const { data } = await axios.get(uri);
 
     if (Object.keys(data).length === 0) {
@@ -19,7 +18,8 @@ const fetchCart = () => async (dispatch) => {
 
 const addCartItem = (productId, qty) => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/cart/user1/" + productId;
+    const uri =
+      process.env.REACT_APP_SERVER_API_URL + "/cart/user1/" + productId;
 
     const { data } = await axios.put(
       uri,
@@ -39,7 +39,8 @@ const addCartItem = (productId, qty) => async (dispatch) => {
 
 const removeCartItem = (productId) => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/cart/user1/" + productId;
+    const uri =
+      process.env.REACT_APP_SERVER_API_URL + "/cart/user1/" + productId;
 
     const { data } = await axios.delete(uri);
 
@@ -56,7 +57,7 @@ const removeCartItem = (productId) => async (dispatch) => {
 
 const removeAllCartItems = () => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/cart/user1";
+    const uri = process.env.REACT_APP_SERVER_API_URL + "/cart/user1";
 
     const { data } = await axios.delete(uri);
 
@@ -73,7 +74,7 @@ const removeAllCartItems = () => async (dispatch) => {
 
 const checkout = () => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/cart/checkout/user1";
+    const uri = process.env.REACT_APP_SERVER_API_URL + "/cart/checkout/user1";
 
     const { data } = await axios.get(uri);
 

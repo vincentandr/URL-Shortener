@@ -1,9 +1,8 @@
 import axios from "axios";
-import config from "./config";
 
 const fetchProducts = () => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/products";
+    const uri = process.env.REACT_APP_SERVER_API_URL + "/products";
     const { data } = await axios.get(uri);
 
     dispatch({ type: "FETCH_PRODUCTS", payload: data.products });
@@ -14,7 +13,7 @@ const fetchProducts = () => async (dispatch) => {
 
 const searchProducts = (input) => async (dispatch) => {
   try {
-    const uri = config.apiUrl + "/products/search";
+    const uri = process.env.REACT_APP_SERVER_API_URL + "/products/search";
     const { data } = await axios.get(uri, {
       params: {
         name: input,
