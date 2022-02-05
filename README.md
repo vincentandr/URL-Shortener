@@ -45,7 +45,7 @@ Call the APIs using API platform, e.g. Postman.
 ```
 /payment                    GET - Get all orders
 /payment/{userId}           GET - Get all orders by user ID
-/payment/draft/{userId}     GET - Get the user's draft order
+/payment/draft/{userId}     GET - Get the user's draft order. Beginning of checkout, and creating Stripe payment flow
 /payment/{orderId}          POST - Make payment
 ```
 
