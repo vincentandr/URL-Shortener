@@ -45,7 +45,8 @@ Call the APIs using API platform, e.g. Postman.
 ```
 /payment                    GET - Get all orders
 /payment/{userId}           GET - Get all orders by user ID
-/payment/{orderId}          PUT - Change order status to paid
+/payment/draft/{userId}     GET - Get the user's draft order
+/payment/{orderId}          POST - Make payment
 ```
 
 ## Tests
