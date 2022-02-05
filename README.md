@@ -1,5 +1,10 @@
 # shopping-microservice (In Progress)
 
+## Frontend UI
+
+https://github.com/vincentandr/shopping-frontend
+
+## Tech Stack Diagram
 ![Untitled Diagram](https://user-images.githubusercontent.com/42005057/147475016-bc2f7406-ed5d-4d1f-8471-b9ba47caef6b.png)
 
 ## Start via Docker commands
