@@ -1,5 +1,5 @@
 # Shopping-frontend
-Frontend for [shopping-microservice](https://github.com/vincentandr/shopping-microservice) system
+Frontend for [shopping-microservice](https://github.com/vincentandr/shopping-microservice) system done in React, Redux, and Material UI.
 
 ## Screenshots
 
