@@ -9,6 +9,7 @@ import (
 
 type IPaymentGrpcClient interface {
 	Grpc_GetOrders(ctx context.Context, in *pb.GetOrdersRequest, opts ...grpc.CallOption) (*pb.GetOrdersResponse, error)
+	Grpc_GetDraftOrder(ctx context.Context, in *pb.GetDraftOrderRequest, opts ...grpc.CallOption) (*pb.GetOrderResponse, error)
 	Grpc_PaymentCheckout(ctx context.Context, in *pb.CheckoutRequest, opts ...grpc.CallOption) (*pb.CheckoutResponse, error)
 	Grpc_MakePayment(ctx context.Context, in *pb.PaymentRequest, opts ...grpc.CallOption) (*pb.PaymentResponse, error)
 }

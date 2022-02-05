@@ -66,12 +66,36 @@ func (r *Repository) GetOrders(ctx context.Context, userId string) (*mongo.Curso
 	return res, nil
 }
 
+func (r *Repository) GetDraftOrder(ctx context.Context, userId string) (model.Order, bool, error) {
+	filter := bson.D{
+		{Key: "user_id", Value: userId},
+		{Key: "status", Value: "draft"},
+	}
+
+	var order model.Order
+
+	res := r.Collection.FindOne(ctx, filter)
+	if res.Err() != nil {
+		fmt.Println("not found")
+		return model.Order{}, false, fmt.Errorf("failed to find order: %v", res.Err().Error())
+	}
+
+	err := res.Decode(&order)
+	if err != nil {
+		fmt.Println("decode error")
+		return model.Order{}, true, fmt.Errorf("failed to decode order: %v", err)
+	}
+
+	return order, true, nil
+}
+
 func (r *Repository) GetItemsFromOrder(ctx context.Context, orderId primitive.ObjectID) (model.UserOrder, error) {
 	var order model.UserOrder
 
 	projection := bson.D{
 		{Key:"user_id", Value: 1},
 		{Key:"items", Value: 1},
+		{Key:"subtotal", Value: 1},
 	}
 
 	if err := r.Collection.FindOne(ctx, bson.M{"_id":orderId}, options.FindOne().SetProjection(projection)).Decode(&order); err != nil{
@@ -82,7 +106,7 @@ func (r *Repository) GetItemsFromOrder(ctx context.Context, orderId primitive.Ob
 }
 
 // Create order draft
-func (r *Repository) Checkout(ctx context.Context, userId string, items []*pb.ItemResponse) (string, error){
+func (r *Repository) Checkout(ctx context.Context, userId string, items []*pb.ItemResponse, subtotal float32) (string, error){
 	var itemsBson []bson.M
 
 	for _, item := range items {
@@ -96,6 +120,8 @@ func (r *Repository) Checkout(ctx context.Context, userId string, items []*pb.It
 		 	"name":item.Name,
 			"price":item.Price, 
 			"qty":item.Qty,
+			"desc":item.Desc,
+			"image":item.Image,
 		})
 	}
 
@@ -111,6 +137,7 @@ func (r *Repository) Checkout(ctx context.Context, userId string, items []*pb.It
 		res, err := r.Collection.InsertOne(ctx, bson.M{
 			"user_id": userId,
 			"items": itemsBson,
+			"subtotal": subtotal,
 			"status": "draft",
 		})
 		if err != nil {
@@ -137,8 +164,15 @@ func (r *Repository) Checkout(ctx context.Context, userId string, items []*pb.It
 }
 
 // Change status to paid
-func (r *Repository) MakePayment(ctx context.Context, orderId primitive.ObjectID) (error){
-	_, err := r.Collection.UpdateOne(ctx, bson.M{"_id":orderId}, bson.M{"$set": bson.M{"status":"paid"}})
+func (r *Repository) MakePayment(ctx context.Context, orderId primitive.ObjectID, customer model.Customer, total float32) (error){
+	_, err := r.Collection.UpdateOne(
+		ctx, 
+		bson.M{"_id":orderId}, 
+		bson.M{"$set": bson.M{
+			"status":"paid",
+			"customer": customer,
+			"total": total,
+		}})
 	if err != nil {
 		return fmt.Errorf("failed to change order status: %v", err)
 	}

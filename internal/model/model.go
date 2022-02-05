@@ -15,10 +15,23 @@ type Order struct {
 	Order_id primitive.ObjectID `bson:"_id"`
 	User_id     string             `bson:"user_id"`
 	Items    []Product            `bson:"items"`
+	Subtotal float32	`bson:"subtotal"`
+	Customer Customer `bson:"customer"`
 	Status      string                `bson:"status"`
+}
+
+type Customer struct {
+	First_name string `bson:"first_name"`
+	Last_name string `bson:"last_name"`
+	Email string `bson:"email"`
+	Address string `bson:"address"`
+	Area string `bson:"area"`
+	Postal string `bson:"postal"`
+	Phone string `bson:"phone"`
 }
 
 type UserOrder struct {
 	User_id     string             `bson:"user_id"`
 	Items    []Product            `bson:"items"`
+	Subtotal	float32	`bson:"subtotal"`
 }

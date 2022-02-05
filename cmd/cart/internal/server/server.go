@@ -132,12 +132,16 @@ func (s *Server) Grpc_Checkout(ctx context.Context, in *pb.CheckoutRequest) (*pb
 
 	// RPC call to payment checkout to create order and return order id
 	itemsForOrder := make([]*paymentpb.ItemResponse, len(res.Products))
+	var subtotal float32 = 0
 
 	for i, item := range res.Products {
-		itemsForOrder[i] = &paymentpb.ItemResponse{ProductId: item.ProductId, Name: item.Name, Price: item.Price, Qty: item.Qty}
+		itemsForOrder[i] = &paymentpb.ItemResponse{ProductId: item.ProductId, Name: item.Name, Price: item.Price, Qty: item.Qty, Desc: item.Desc, Image: item.Image}
+		
+		// Calc subtotal
+		subtotal += item.Price * float32(item.Qty)
 	}
 
-	response, err := s.PaymentClient.Grpc_PaymentCheckout(ctx, &paymentpb.CheckoutRequest{UserId: in.UserId, Items: itemsForOrder})
+	response, err := s.PaymentClient.Grpc_PaymentCheckout(ctx, &paymentpb.CheckoutRequest{UserId: in.UserId, Items: itemsForOrder, Subtotal: subtotal})
 	if err != nil{
 		return nil, err
 	}

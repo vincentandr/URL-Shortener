@@ -41,5 +41,6 @@ func (r *Router) routes() {
 	// Payment
 	r.HandleFunc("/payment", r.PaymentHandlers.GetOrders).Methods("GET")
 	r.HandleFunc("/payment/{userId}", r.PaymentHandlers.GetOrders).Methods("GET")
-	r.HandleFunc("/payment/{orderId}", r.PaymentHandlers.MakePayment).Methods("PUT")
+	r.HandleFunc("/payment/draft/{userId}", r.PaymentHandlers.GetDraftOrder).Methods("GET")
+	r.HandleFunc("/payment/{orderId}", r.PaymentHandlers.MakePayment).Methods("POST")
 }

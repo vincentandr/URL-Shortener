@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentServiceClient interface {
 	Grpc_GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error)
+	Grpc_GetDraftOrder(ctx context.Context, in *GetDraftOrderRequest, opts ...grpc.CallOption) (*GetOrderResponse, error)
 	Grpc_PaymentCheckout(ctx context.Context, in *CheckoutRequest, opts ...grpc.CallOption) (*CheckoutResponse, error)
 	Grpc_MakePayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
 }
@@ -34,6 +35,15 @@ func NewPaymentServiceClient(cc grpc.ClientConnInterface) PaymentServiceClient {
 func (c *paymentServiceClient) Grpc_GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error) {
 	out := new(GetOrdersResponse)
 	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/Grpc_GetOrders", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentServiceClient) Grpc_GetDraftOrder(ctx context.Context, in *GetDraftOrderRequest, opts ...grpc.CallOption) (*GetOrderResponse, error) {
+	out := new(GetOrderResponse)
+	err := c.cc.Invoke(ctx, "/paymentpb.PaymentService/Grpc_GetDraftOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +73,7 @@ func (c *paymentServiceClient) Grpc_MakePayment(ctx context.Context, in *Payment
 // for forward compatibility
 type PaymentServiceServer interface {
 	Grpc_GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error)
+	Grpc_GetDraftOrder(context.Context, *GetDraftOrderRequest) (*GetOrderResponse, error)
 	Grpc_PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error)
 	Grpc_MakePayment(context.Context, *PaymentRequest) (*PaymentResponse, error)
 	mustEmbedUnimplementedPaymentServiceServer()
@@ -74,6 +85,9 @@ type UnimplementedPaymentServiceServer struct {
 
 func (UnimplementedPaymentServiceServer) Grpc_GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Grpc_GetOrders not implemented")
+}
+func (UnimplementedPaymentServiceServer) Grpc_GetDraftOrder(context.Context, *GetDraftOrderRequest) (*GetOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Grpc_GetDraftOrder not implemented")
 }
 func (UnimplementedPaymentServiceServer) Grpc_PaymentCheckout(context.Context, *CheckoutRequest) (*CheckoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Grpc_PaymentCheckout not implemented")
@@ -108,6 +122,24 @@ func _PaymentService_Grpc_GetOrders_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PaymentServiceServer).Grpc_GetOrders(ctx, req.(*GetOrdersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PaymentService_Grpc_GetDraftOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDraftOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).Grpc_GetDraftOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/paymentpb.PaymentService/Grpc_GetDraftOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).Grpc_GetDraftOrder(ctx, req.(*GetDraftOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -158,6 +190,10 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Grpc_GetOrders",
 			Handler:    _PaymentService_Grpc_GetOrders_Handler,
+		},
+		{
+			MethodName: "Grpc_GetDraftOrder",
+			Handler:    _PaymentService_Grpc_GetDraftOrder_Handler,
 		},
 		{
 			MethodName: "Grpc_PaymentCheckout",
