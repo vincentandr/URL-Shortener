@@ -8,12 +8,13 @@ import FormInput from "./FormInput";
 const AddressForm = ({next, formData}) => {
     const methods = useForm({
         defaultValues: {
-            firstName: formData.state.firstName,
-            lastName: formData.state.lastName,
+            first_name: formData.state.first_name,
+            last_name: formData.state.last_name,
             address: formData.state.address,
             email: formData.state.email,
             area: formData.state.area,
             postal: formData.state.postal,
+            phone: formData.state.phone,
         }
     })
 
@@ -28,12 +29,13 @@ const AddressForm = ({next, formData}) => {
                     next();
                 })}>
                     <Grid container spacing={3}>
-                        <FormInput required name="firstName" placeholder="First Name"/>
-                        <FormInput required name="lastName" placeholder="Last Name"/>
+                        <FormInput required name="first_name" placeholder="First Name"/>
+                        <FormInput required name="last_name" placeholder="Last Name"/>
                         <FormInput required name="address" placeholder="Address"/>
                         <FormInput required name="email" placeholder="E-mail" type="email"/>
                         <FormInput required name="area" placeholder="Area"/>
                         <FormInput required name="postal" placeholder="Postal Code"/>
+                        <FormInput required name="phone" placeholder="Phone Number"/>
                     </Grid>
                     <Box sx={{
                         display: "flex",

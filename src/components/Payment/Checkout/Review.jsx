@@ -2,7 +2,7 @@ import React from "react"
 import { Box, List, ListItem, ListItemText, Typography, Divider } from "@mui/material"
 import { formatCurrency } from "../../../helpers/Utils"
 
-const Review = ({cart}) => {
+const Review = ({payment}) => {
     return (
         <>
             <Typography variant="h6" >Order Summary</Typography>
@@ -10,7 +10,7 @@ const Review = ({cart}) => {
                 maxHeight: "20vw",
                 overflow: "auto",
             }}>
-                {cart.products.map((item) => (
+                {payment.order.items.map((item) => (
                     <ListItem key={item.product_id}>
                         <Box component="img" sx={{
                                     minWidth: {xs: 50, md: 75},
@@ -43,7 +43,7 @@ const Review = ({cart}) => {
                 pt:2,
             }}>
                 <Typography variant="subtitle1">Total</Typography>
-                <Typography variant="subtitle1">${formatCurrency(cart.subtotal)}</Typography>
+                <Typography variant="subtitle1">${formatCurrency(payment.order.subtotal)}</Typography>
             </Box>
             <Divider/>
         </>

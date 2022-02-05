@@ -1,39 +1,74 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { useDispatch } from "react-redux"
-import { Box, Button, Typography } from "@mui/material"
-import { Elements, CardElement, ElementsConsumer } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
+import { Alert, Box, Button, Typography, CircularProgress } from "@mui/material"
+import { PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js"
 
 import Review from "./Review"
 import { formatCurrency } from "../../../helpers/Utils"
 import { makePayment } from "../../../actions"
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY)
-
-const PaymentForm = ({cart, step, formDataState}) => {
+const PaymentForm = ({payment, step, formData}) => {
     const dispatch = useDispatch()
+    const elements = useElements()
+    const stripe = useStripe()
+    const [message, setMessage] = useState("")
+    const [isLoading, setLoading] = useState(false)
 
-    const handleSubmit = async (event, elements, stripe) => {
+    useEffect(() => {
+        if (!stripe || !payment.secret_key) {
+            return;
+        }
+
+        stripe.retrievePaymentIntent(payment.secret_key).then(({ paymentIntent }) => {
+            switch (paymentIntent.status) {
+                case "succeeded":
+                    setMessage("Payment succeeded!");
+                    break;
+                case "processing":
+                    setMessage("Your payment is processing.");
+                    break;
+                case "requires_payment_method":
+                    setMessage("Your payment was not successful, please try again.");
+                    break;
+                default:
+                    setMessage("Something went wrong.");
+                    break;
+            }
+        });
+    }, [stripe]);
+
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (!stripe || !elements) return;
 
-        const cardElement = elements.getElement(CardElement);
+        setLoading(true)
 
-        const {error, paymentMethod} = await stripe.createPaymentMethod({type: "card", card: cardElement})
+        const { error } = await stripe.confirmPayment({
+            elements,
+            redirect: "if_required",
+        });
 
-        if(error) {
-            console.log(error)
-        }else {
+        setLoading(false)
+        
+        if (error) {
+            if (error.type === "card_error" || error.type === "validation_error") {
+                setMessage(error.message);
+            } else {
+                setMessage("An unexpected error occured.");
+            }
+        } else {
             const orderData = {
-                order_id: cart.order_id,
+                order_id: payment.order.order_id,
                 customer: {
-                    firstname: formDataState.firstName,
-                    lastname: formDataState.lastname,
-                    email: formDataState.email,
-                    address: formDataState.address,
-                    city: formDataState.city},
-                paymentMethod: {gateway: "stripe", stripe: {payment_method_id: paymentMethod.id}},
+                    first_name: formData.state.first_name,
+                    last_name: formData.state.last_name,
+                    email: formData.state.email,
+                    address: formData.state.address,
+                    area: formData.state.area,
+                    postal: formData.state.postal,
+                    phone: formData.state.phone,
+                },
             }
 
             dispatch(makePayment(orderData)).then((result) => {
@@ -43,32 +78,32 @@ const PaymentForm = ({cart, step, formDataState}) => {
     }
 
     const handlePrev = () => {
-        console.log(formDataState)
+        console.log(formData.state)
         step.prev()
     }
 
     return (
         <>
-            <Review cart={cart}/>
+            <Review payment={payment}/>
             <Typography variant="h6" gutterBottom>Payment method</Typography>
-            <Elements stripe={stripePromise}>
-                <ElementsConsumer>
-                    {({elements, stripe}) => (
-                        <form onSubmit={(e) => handleSubmit(e, elements, stripe)}>
-                            <CardElement/>
-                            <Box sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                pt: 3,
-                                pb: 3,
-                            }}>
-                                <Button variant="outlined" onClick={handlePrev}>Back</Button>
-                                <Button type="submit" disabled={!stripe} variant="contained">Pay ${formatCurrency(cart.subtotal)}</Button>  
-                            </Box>      
-                        </form>
-                    )}
-                </ElementsConsumer>
-            </Elements>
+            {/* Show any error or success messages */}
+            {message && <Alert severity="error">
+                <Typography variant="subtitle1">{message}</Typography>
+                </Alert>} 
+                <form onSubmit={(e) => handleSubmit(e, elements, stripe)}>
+                    <PaymentElement />
+                    <Box sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        pt: 3,
+                        pb: 3,
+                    }}>
+                        <Button variant="outlined" onClick={handlePrev}>Back</Button>
+                        <Button type="submit" disabled={!stripe} variant="contained">
+                            {isLoading ? <CircularProgress size={10}/> : `Pay $${formatCurrency(payment.order.subtotal)}`}
+                        </Button>  
+                    </Box>     
+                </form>
         </>
     )
 }

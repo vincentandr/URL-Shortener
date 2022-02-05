@@ -1,57 +1,74 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Box, Typography, Stepper, Step, StepLabel, Paper} from "@mui/material";
+import { Elements } from "@stripe/react-stripe-js"
+import { loadStripe } from "@stripe/stripe-js"
 
 import AddressForm from "./Checkout/AddressForm";
 import PaymentForm from "./Checkout/PaymentForm";
 import Confirmation from "./Checkout/Confirmation";
+import defaultFormData from "../../constants/FormData";
+import { fetchDraftOrder } from "../../actions";
+import EmptyCart from "./Checkout/EmptyCart";
 
 const steps = ["Shipping address", "Payment details", "Confirmation"]
 
-const Form = ({step, cart, formData}) => {
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY)
+
+const getSelectors = (state) => ({
+  payment: state.payment,
+});
+
+const Form = ({step, payment, formData}) => {
     return (
         (step.state === 0 && <AddressForm next={step.next} formData={formData}/>) 
-        || (step.state === 1 && <PaymentForm cart={cart} step={step} formDataState={formData.state}/>)
-        || (step.state === 2 && <Confirmation cart={cart} />)
+        || (step.state === 1 && <PaymentForm payment={payment} step={step} formData={formData}/>)
+        || (step.state === 2 && <Confirmation payment={payment} />)
     )
 }
 
-const Payment = ({cart}) => {
+const Payment = () => {
     const [activeStep, setActiveStep] = useState(0)
-    const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        address: "",
-        email: "",
-        area: "",
-        postal: "",
-    })
+    const [formData, setFormData] = useState(defaultFormData)
+    const dispatch = useDispatch();
+    const { payment } = useSelector(getSelectors);
 
     const nextStep = () => setActiveStep((prevActiveStep) => prevActiveStep + 1)
     const prevStep = () => setActiveStep((prevActiveStep) => prevActiveStep - 1)
 
+    useEffect(() => {
+        dispatch(fetchDraftOrder("user1"))
+    }, [])
+
     return (
-        <Box sx={{
-            display: "flex",
-            justifyContent: "center",
-            marginTop: 5,
-        }}>
-            <Paper sx={{
-                width: 1/3,
-                pl: 3,
-                pr: 3,}}>
-                    <Typography variant="h5" align="center" gutterBottom>
-                        Checkout
-                    </Typography>
-                    <Stepper activeStep={activeStep}>
-                        {steps.map((step) => (
-                            <Step key={step}>
-                                <StepLabel>{step}</StepLabel>
-                            </Step>
-                        ))}
-                    </Stepper>
-                    {activeStep === steps.length ? <Confirmation/> : <Form cart={cart} formData={{state: formData, set: setFormData}} step={{state: activeStep, next: nextStep, prev: prevStep}}/>}
-            </Paper>
-        </Box>
+        (payment.secret_key ? (
+            <Elements stripe={stripePromise} options={{
+                clientSecret: payment.secret_key
+            }}>
+                <Box sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: 5,
+                }}>
+                    <Paper sx={{
+                        width: 1/3,
+                        pl: 3,
+                        pr: 3,}}>
+                            <Typography variant="h5" align="center" gutterBottom>
+                                Checkout
+                            </Typography>
+                            <Stepper activeStep={activeStep}>
+                                {steps.map((step) => (
+                                    <Step key={step}>
+                                        <StepLabel>{step}</StepLabel>
+                                    </Step>
+                                ))}
+                            </Stepper>
+                            {activeStep === steps.length ? <Confirmation/> : <Form payment={payment} formData={{state: formData, set: setFormData}} step={{state: activeStep, next: nextStep, prev: prevStep}}/>}
+                    </Paper>
+                </Box>
+            </Elements>
+        ) : <EmptyCart/>)
     )
 }
 
