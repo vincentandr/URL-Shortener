@@ -24,6 +24,7 @@ WORKDIR /app
 
 # Copy resulted built app from previous stage
 COPY --from=builder /app/build ./
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # If using cmd with executable file as its parameter, means cmd becomes executor of the file (no need entrypoint).
 # If using cmd without executable file as its parameter, must use entrypoint for the executor with executable file as entrypoint's parameter
