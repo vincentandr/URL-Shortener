@@ -20,7 +20,7 @@ function App() {
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchCart());
-  }, []);
+  }, [document.location.href]);
 
   return (
     <Router>
@@ -47,7 +47,7 @@ function App() {
           <Route
             exact
             path="/payment"
-            element={<Payment cart={cart} />}
+            element={<Payment orderId={cart.order_id} />}
           ></Route>
         </Routes>
       </div>

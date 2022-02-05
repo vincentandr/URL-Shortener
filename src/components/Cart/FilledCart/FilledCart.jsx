@@ -2,14 +2,14 @@ import React from "react";
 import {useState} from "react";
 import {useDispatch} from "react-redux";
 import {useNavigate} from "react-router-dom";
-import {Box, Typography, Button, Stack, ButtonGroup, List, ListItem, ListItemText, Divider} from "@mui/material"
+import {Box, Typography, Button, Stack, ButtonGroup, List, ListItem, ListItemText, Divider, drawerClasses} from "@mui/material"
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import {DeleteForeverOutlined, Add, Remove} from "@mui/icons-material"
 
 import { removeCartItem, removeAllCartItems, addCartItem, checkout } from "../../../actions";
 import { formatCurrency } from "../../../helpers/Utils";
 
-const FilledCart = ({cart}) => {
+const FilledCart = ({cart, drawer}) => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
@@ -51,6 +51,7 @@ const FilledCart = ({cart}) => {
 
     const handleCheckout = () => {
         dispatch(checkout()).then(() => {
+            drawer.onClick(false)
             navigate("/payment")
         })
     }

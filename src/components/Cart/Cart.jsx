@@ -26,7 +26,7 @@ const Cart = ({cart, drawer}) => {
                         Close
                     </Button>
                 </Stack>
-                {isEmpty ? <EmptyCart/> : <FilledCart cart={cart}/>}
+                {isEmpty ? <EmptyCart/> : <FilledCart cart={cart} drawer={drawer}/>}
             </Container>
         </Drawer>
     )
