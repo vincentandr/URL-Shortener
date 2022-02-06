@@ -1,5 +1,5 @@
 import React from "react"
-import { Box, Typography, Grid } from "@mui/material";
+import { Typography, Grid, Stack } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import {Link} from "react-router-dom"
 import { BlackButton } from "../../../theme";
@@ -38,15 +38,12 @@ const AddressForm = ({next, formData}) => {
                         <FormInput required xs={12} sm={12} name="area" label="Area"/>
                         <FormInput required xs={12} sm={12} name="postal" label="Postal Code"/>
                     </Grid>
-                    <Box sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        pt: 3,
-                        pb: 3,
+                    <Stack direction="row" justifyContent="space-between" sx={{
+                        pt: 3
                     }}>
                         <BlackButton component={Link} to="/" variant="outlined" text="Cancel"/>
                         <BlackButton type="submit" variant="outlined" text="Next"/>
-                    </Box>
+                    </Stack>
                 </form>
             </FormProvider>
         </>

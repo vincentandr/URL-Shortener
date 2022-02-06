@@ -86,9 +86,10 @@ const PaymentForm = ({payment, step, formData}) => {
     return (
         <>
             <Review payment={payment}/>
-            <Typography variant="h6" gutterBottom>Payment method</Typography>
             {/* Show any error or success messages */}
-            {message && <Alert severity="error">
+            {message && <Alert severity="error" sx={{
+                mb:2
+            }}>
                 <Typography variant="subtitle1">{message}</Typography>
                 </Alert>} 
                 <form onSubmit={(e) => handleSubmit(e, elements, stripe)}>

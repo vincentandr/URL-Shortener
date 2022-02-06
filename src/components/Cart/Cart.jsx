@@ -12,8 +12,8 @@ const CartContent = ({cart, drawer}) => {
         <Container sx={{
             height: "100%",
         }}>
-            <Stack direction="row" spacing={2}>
-                <Typography variant="h4" width="100%">
+            <Stack direction="row" justifyContent="space-between">
+                <Typography variant="h4">
                     Shopping Cart
                 </Typography>
                 <Button variant="text" color="inherit" size="large" startIcon={<Close />} onClick={() => drawer.onClick(false)}>

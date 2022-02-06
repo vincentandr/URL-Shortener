@@ -3,11 +3,12 @@ import { Box, List, ListItem, ListItemText, Typography, Divider } from "@mui/mat
 import { formatCurrency } from "../../../helpers/Utils"
 
 const Review = ({payment}) => {
+
     return (
         <>
             <Typography variant="h6" >Order Summary</Typography>
             <List sx={{
-                maxHeight: "20vw",
+                maxHeight: "30%",
                 overflow: "auto",
             }}>
                 {payment.order.items.map((item) => (
@@ -39,11 +40,9 @@ const Review = ({payment}) => {
             <Box sx={{
                 display:"flex",
                 justifyContent: "space-between",
-                pb:2,
-                pt:2,
             }}>
-                <Typography variant="subtitle1">Total</Typography>
-                <Typography variant="subtitle1">${formatCurrency(payment.order.subtotal)}</Typography>
+                <Typography variant="h6">Total</Typography>
+                <Typography variant="h6">${formatCurrency(payment.order.subtotal)}</Typography>
             </Box>
             <Divider/>
         </>

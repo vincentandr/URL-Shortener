@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Box, Typography, Stepper, Step, StepLabel, Paper} from "@mui/material";
+import { Box, Typography, Stepper, Step, StepLabel, useMediaQuery, useTheme, Stack, Paper} from "@mui/material";
 import { Elements } from "@stripe/react-stripe-js"
 import { loadStripe } from "@stripe/stripe-js"
 
@@ -27,14 +27,43 @@ const Form = ({step, payment, formData}) => {
     )
 }
 
-const Payment = () => {
+const PaymentContent = ({payment}) => {
     const [activeStep, setActiveStep] = useState(0)
     const [formData, setFormData] = useState(defaultFormData)
-    const dispatch = useDispatch();
-    const { payment } = useSelector(getSelectors);
 
     const nextStep = () => setActiveStep((prevActiveStep) => prevActiveStep + 1)
     const prevStep = () => setActiveStep((prevActiveStep) => prevActiveStep - 1)
+
+    return (
+        <Stack spacing={1} sx={{
+            height: "100%"
+        }}>
+            <Typography variant="h5" align="center" gutterBottom>
+                Checkout
+            </Typography>
+            <Stepper activeStep={activeStep}>
+                {steps.map((step) => (
+                    <Step key={step}>
+                        <StepLabel>{step}</StepLabel>
+                    </Step>
+                ))}
+            </Stepper>
+            {activeStep === steps.length ? <Confirmation/> : 
+            <Form 
+                payment={payment} 
+                formData={{state: formData, set: setFormData}} 
+                step={{state: activeStep, next: nextStep, prev: prevStep}}/>}
+        </Stack>
+    )
+}
+
+const Payment = () => {
+    const theme = useTheme()
+    const smallPhone = useMediaQuery(theme.breakpoints.down("sm"))
+    const tablet = useMediaQuery(theme.breakpoints.down("md"))
+
+    const dispatch = useDispatch();
+    const { payment } = useSelector(getSelectors);
 
     useEffect(() => {
         dispatch(fetchDraftOrder("user1"))
@@ -48,24 +77,16 @@ const Payment = () => {
                 <Box sx={{
                     display: "flex",
                     justifyContent: "center",
-                    marginTop: 5,
+                    height: "100vh",
+                    pl: 2,
+                    pr: 2,
                 }}>
-                    <Paper sx={{
-                        width: 1/3,
-                        pl: 3,
-                        pr: 3,}}>
-                            <Typography variant="h5" align="center" gutterBottom>
-                                Checkout
-                            </Typography>
-                            <Stepper activeStep={activeStep}>
-                                {steps.map((step) => (
-                                    <Step key={step}>
-                                        <StepLabel>{step}</StepLabel>
-                                    </Step>
-                                ))}
-                            </Stepper>
-                            {activeStep === steps.length ? <Confirmation/> : <Form payment={payment} formData={{state: formData, set: setFormData}} step={{state: activeStep, next: nextStep, prev: prevStep}}/>}
-                    </Paper>
+                    <Box sx={{
+                        width: (smallPhone && 320 || tablet && 450 || !tablet && 600),
+                        height: "100%",
+                    }}>
+                        <PaymentContent payment={payment}/>
+                    </Box>
                 </Box>
             </Elements>
         ) : <EmptyCart/>)
