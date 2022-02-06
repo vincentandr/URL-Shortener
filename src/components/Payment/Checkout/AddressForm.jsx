@@ -30,13 +30,13 @@ const AddressForm = ({next, formData}) => {
                     next();
                 })}>
                     <Grid container spacing={3}>
-                        <FormInput required name="first_name" placeholder="First Name"/>
-                        <FormInput required name="last_name" placeholder="Last Name"/>
-                        <FormInput required name="address" placeholder="Address"/>
-                        <FormInput required name="email" placeholder="E-mail" type="email"/>
-                        <FormInput required name="area" placeholder="Area"/>
-                        <FormInput required name="postal" placeholder="Postal Code"/>
-                        <FormInput required name="phone" placeholder="Phone Number"/>
+                        <FormInput required xs={12} sm={6} name="first_name" label="First Name"/>
+                        <FormInput required xs={12} sm={6} name="last_name" label="Last Name"/>
+                        <FormInput required xs={12} sm={12} name="address" label="Address"/>
+                        <FormInput required xs={12} sm={12} name="email" label="E-mail" type="email"/>
+                        <FormInput required xs={12} sm={12} name="phone" label="Phone Number"/>
+                        <FormInput required xs={12} sm={12} name="area" label="Area"/>
+                        <FormInput required xs={12} sm={12} name="postal" label="Postal Code"/>
                     </Grid>
                     <Box sx={{
                         display: "flex",
