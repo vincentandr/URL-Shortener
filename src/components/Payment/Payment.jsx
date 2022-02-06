@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Box, Typography, Stepper, Step, StepLabel, useMediaQuery, useTheme, Stack, Paper} from "@mui/material";
+import { Box, Typography, Stepper, Step, StepLabel, useMediaQuery, useTheme, Stack} from "@mui/material";
 import { Elements } from "@stripe/react-stripe-js"
 import { loadStripe } from "@stripe/stripe-js"
 
@@ -67,7 +67,7 @@ const Payment = () => {
 
     useEffect(() => {
         dispatch(fetchDraftOrder("user1"))
-    }, [])
+    }, [dispatch])
 
     return (
         (payment.secret_key ? (
@@ -82,7 +82,7 @@ const Payment = () => {
                     pr: 2,
                 }}>
                     <Box sx={{
-                        width: (smallPhone && 320 || tablet && 450 || !tablet && 600),
+                        width: ((smallPhone && 320) || (tablet && 450) || (!tablet && 600)),
                         height: "100%",
                     }}>
                         <PaymentContent payment={payment}/>

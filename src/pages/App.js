@@ -20,7 +20,7 @@ function App() {
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchCart());
-  }, [document.location.href]);
+  }, [dispatch]);
 
   return (
     <Router>

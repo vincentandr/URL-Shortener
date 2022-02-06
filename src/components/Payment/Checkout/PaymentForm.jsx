@@ -36,7 +36,7 @@ const PaymentForm = ({payment, step, formData}) => {
                     break;
             }
         });
-    }, [stripe]);
+    }, [stripe, payment.secret_key]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
