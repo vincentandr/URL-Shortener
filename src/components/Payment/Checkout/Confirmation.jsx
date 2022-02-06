@@ -1,6 +1,8 @@
 import React from "react"
-import {Box, Typography, Button} from "@mui/material";
+import {Box, Typography} from "@mui/material";
 import { Link } from "react-router-dom";
+
+import { BlackButton } from "../../../theme";
 
 const Confirmation = ({payment}) => {
     return (
@@ -14,7 +16,7 @@ const Confirmation = ({payment}) => {
                 pt: 3,
                 pb: 3,
             }}>
-                <Button variant="outlined" component={Link} to="/">Back</Button>
+                <BlackButton variant="outlined" component={Link} to="/" text="Back"/>
             </Box>
         </>
     )

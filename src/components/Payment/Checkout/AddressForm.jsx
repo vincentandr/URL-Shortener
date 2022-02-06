@@ -1,7 +1,8 @@
 import React from "react"
-import { Box, Typography, Grid, Button } from "@mui/material";
+import { Box, Typography, Grid } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import {Link} from "react-router-dom"
+import { BlackButton } from "../../../theme";
 
 import FormInput from "./FormInput";
 
@@ -43,8 +44,8 @@ const AddressForm = ({next, formData}) => {
                         pt: 3,
                         pb: 3,
                     }}>
-                        <Button component={Link} to="/" variant="outlined">Cancel</Button>
-                        <Button type="submit" variant="outlined">Next</Button>
+                        <BlackButton component={Link} to="/" variant="outlined" text="Cancel"/>
+                        <BlackButton type="submit" variant="outlined" text="Next"/>
                     </Box>
                 </form>
             </FormProvider>

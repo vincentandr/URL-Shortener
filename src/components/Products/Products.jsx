@@ -51,7 +51,7 @@ const Products = ({products, cart, onClickDrawer}) => {
             }}>
                 <Grid container justify="center" spacing={4}>
                     {products.map((product) => (
-                        <Grid item key={product.product_id} xs={6} md={4} lg={3}>
+                        <Grid item key={product.product_id} xs={12} sm={6} lg={3}>
                             <Product product={product} cart={cart} onClickDrawer={onClickDrawer} setSnackPack={setSnackPack}/>
                         </Grid>
                     ))}

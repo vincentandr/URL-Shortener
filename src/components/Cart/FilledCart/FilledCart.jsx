@@ -1,34 +1,16 @@
 import React from "react";
-import {useState} from "react";
 import {useDispatch} from "react-redux";
 import {useNavigate} from "react-router-dom";
-import {Box, Typography, Button, Stack, ButtonGroup, List, ListItem, ListItemText, Divider, drawerClasses} from "@mui/material"
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import {Box, Typography, Button, Stack, ButtonGroup, List, ListItem, ListItemText, Divider} from "@mui/material"
 import {DeleteForeverOutlined, Add, Remove} from "@mui/icons-material"
 
 import { removeCartItem, removeAllCartItems, addCartItem, checkout } from "../../../actions";
 import { formatCurrency } from "../../../helpers/Utils";
+import { BlackButton } from "../../../theme";
 
 const FilledCart = ({cart, drawer}) => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
-
-    const disabledButtonTheme = createTheme({
-        palette: {
-            action: {
-                disabledBackground: 'black',
-                disabled: 'inherit',
-            }
-        }
-    });
-
-    const theme = createTheme({
-        palette: {
-            primary: {
-                main: "#212121",
-            },
-        },
-    });
 
     const handleQty = (op, productId, qty) => {
         // Add +1 to qty if item already exists in cart
@@ -93,9 +75,7 @@ const FilledCart = ({cart, drawer}) => {
                                     product.product_id,
                                     1,
                                 )}><Remove/></Button>
-                                <ThemeProvider theme={disabledButtonTheme}>
-                                    <Button disabled>{product.qty === undefined ? 0 : product.qty}</Button>
-                                </ThemeProvider>
+                                <BlackButton disabled text={product.qty === undefined ? 0 : product.qty}/>
                                 <Button color="inherit" onClick={() => dispatch(removeCartItem(product.product_id))}>
                                     <DeleteForeverOutlined/>
                                 </Button>
@@ -113,10 +93,8 @@ const FilledCart = ({cart, drawer}) => {
                 <Typography variant="subtitle1">Subtotal</Typography>
                 <Typography variant="subtitle1">${formatCurrency(cart.subtotal)}</Typography>
             </Box>
-            <ThemeProvider theme={theme}>
-                <Button type="button" variant="contained" color="primary" fullWidth onClick={handleCheckout}>Checkout</Button>
-            </ThemeProvider>
-            <Button type="button" variant="outlined" color="inherit" fullWidth onClick={() => dispatch(removeAllCartItems())}>Empty Cart</Button>
+            <BlackButton variant="contained" fullWidth onClick={handleCheckout} text="Checkout"/>
+            <BlackButton variant="outlined" fullWidth onClick={() => dispatch(removeAllCartItems())} text="Empty Cart"/>
         </Stack>
     )
 }

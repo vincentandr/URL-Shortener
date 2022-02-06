@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react"
 import { useDispatch } from "react-redux"
-import { Alert, Box, Button, Typography, CircularProgress } from "@mui/material"
+import { Alert, Box, Typography, CircularProgress } from "@mui/material"
 import { PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js"
 
 import Review from "./Review"
 import { formatCurrency } from "../../../helpers/Utils"
 import { makePayment } from "../../../actions"
+import { BlackButton } from "../../../theme"
 
 const PaymentForm = ({payment, step, formData}) => {
     const dispatch = useDispatch()
@@ -98,10 +99,12 @@ const PaymentForm = ({payment, step, formData}) => {
                         pt: 3,
                         pb: 3,
                     }}>
-                        <Button variant="outlined" onClick={handlePrev}>Back</Button>
-                        <Button type="submit" disabled={!stripe} variant="contained">
-                            {isLoading ? <CircularProgress size={10}/> : `Pay $${formatCurrency(payment.order.subtotal)}`}
-                        </Button>  
+                        <BlackButton variant="outlined" onClick={handlePrev} text="Back"/>
+                        <BlackButton 
+                        type="submit" 
+                        disabled={!stripe} 
+                        variant="contained" 
+                        text={isLoading ? <CircularProgress color="inherit" size={20}/> : `Pay $${formatCurrency(payment.order.subtotal)}`}/>
                     </Box>     
                 </form>
         </>

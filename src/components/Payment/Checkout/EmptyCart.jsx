@@ -1,13 +1,7 @@
 import React from "react"
 import { Box, Paper, Typography } from "@mui/material"
-import {ThemeProvider, createTheme } from "@mui/material/styles";
 import { Link } from "react-router-dom";
-
-const theme = createTheme({
-    typography: {
-        fontFamily: 'Fugaz One',
-    },
-});
+import { Logo } from "../../../theme";
 
 const EmptyCart = () => {
     return (
@@ -21,13 +15,11 @@ const EmptyCart = () => {
                 pl: 3,
                 pr: 3,
                 textAlign: "center",}}>
-                    <ThemeProvider theme={theme}>
-                        <Typography component={Link} to="/" gutterBottom variant="h4" color="inherit" sx={{
+                    <div>
+                        <Logo component={Link} to="/" gutterBottom variant="h4" color="inherit" sx={{
                             textDecoration: "none",
-                        }}>
-                            Microshopping
-                        </Typography>
-                    </ThemeProvider>
+                        }}/>
+                    </div>
                     <Box 
                         component="img"
                         sx={{

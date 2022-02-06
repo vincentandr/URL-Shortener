@@ -26,7 +26,9 @@ const Product = ({product, cart, onClickDrawer}) => {
     return (
         <Card>
             <CardMedia image={product.image} title={product.name} style={{height:0, paddingTop: "56.29%"}}/>
-            <CardContent>
+            <CardContent sx={{
+                pb: 0
+            }}>
                 <Stack direction="row" spacing={2}>
                     <Typography variant="h6" gutterBottom>
                         {product.name}
@@ -38,16 +40,16 @@ const Product = ({product, cart, onClickDrawer}) => {
                         ${formatCurrency(product.price)}
                     </Typography>
                 </Stack>
-                <Typography variant="body2">{product.desc}</Typography>
+                <Typography variant="body1">{product.desc}</Typography>
             </CardContent>
             <CardActions>
                 <Box sx={{
-                    flexGrow: 1
+                    flexGrow: 1,
                 }}/>
                 <IconButton aria-label="Add to cart" onClick={() => handleCartClick(
                     product.product_id,
                     1,)}>
-                    <AddShoppingCart/>
+                    <AddShoppingCart fontSize="large"/>
                 </IconButton>
             </CardActions>
         </Card>

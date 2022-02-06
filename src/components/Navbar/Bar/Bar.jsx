@@ -1,11 +1,11 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
-import {Toolbar, IconButton, Badge, Box, Typography, AppBar, TextField, InputAdornment, Stack} from "@mui/material";
-import {ThemeProvider, createTheme } from "@mui/material/styles";
+import {Toolbar, IconButton, Badge, Box, AppBar, TextField, InputAdornment, Stack} from "@mui/material";
 import {ShoppingCart, Search, AccountCircle} from "@mui/icons-material";
 
 import { searchProducts } from "../../../actions/Products";
+import { Logo } from "../../../theme";
 
 const Bar = ({cart, drawer, login}) => {
     const dispatch = useDispatch();
@@ -14,25 +14,15 @@ const Bar = ({cart, drawer, login}) => {
         dispatch(searchProducts(e.target.value))
     }
 
-    const theme = createTheme({
-        typography: {
-            fontFamily: 'Fugaz One',
-        },
-    });
-
     return(
-        <AppBar position="relative" color="inherit">
+        <AppBar position="sticky" color="inherit">
             <Toolbar sx={{
                 ml: "5%",
                 mr: "5%",
             }}>
-                <ThemeProvider theme={theme}>
-                    <Typography component={Link} to="/" variant="h4" color="inherit" sx={{
-                        textDecoration: "none"
-                    }}>
-                        Microshopping
-                    </Typography>
-                </ThemeProvider>
+                <Logo component={Link} to="/" variant="h4" color="inherit" sx={{
+                    textDecoration: "none"
+                }}/>
                 <Box sx={{
                     flexGrow: 1
                 }}/>
