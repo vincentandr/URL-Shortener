@@ -16,9 +16,7 @@ const EmptyCart = () => {
                 pr: 3,
                 textAlign: "center",}}>
                     <div>
-                        <Logo component={Link} to="/" gutterBottom variant="h4" color="inherit" sx={{
-                            textDecoration: "none",
-                        }}/>
+                        <Logo component={Link} to="/" gutterBottom variant="h4" color="inherit"/>
                     </div>
                     <Box 
                         component="img"

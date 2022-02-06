@@ -55,6 +55,7 @@ const Logo = ({ variant }) => (
     <Typography
       component={Link}
       to="/"
+      color="inherit"
       variant={variant}
       sx={{
         textDecoration: "none",

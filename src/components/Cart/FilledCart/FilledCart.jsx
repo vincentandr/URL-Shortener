@@ -39,24 +39,23 @@ const FilledCart = ({cart, drawer}) => {
     }
 
     return (
-        <Stack directon="row" spacing={2}>
+        <Stack justifyContent="space-between" sx={{height: "90%"}}>
             <List sx={{
-                maxHeight: "30vw",
+                maxHeight: "100%",
                 overflow: "auto",
             }}>
                 {cart.products.map((product) => (
                     <ListItem key={product.product_id}>
                         <Box component="img" sx={{
-                                    minWidth: {xs: 50, md: 75},
-                                    maxHeight: { xs: 50, md: 75 },
-                                    maxWidth: { xs: 50, md: 75 },
+                                    minWidth: {xs: 50, sm: 75},
+                                    maxHeight: { xs: 50, sm: 75 },
+                                    maxWidth: { xs: 50, sm: 75 },
                                     }}
                                     alt="product img"
                                     src={product.image}/>
                         <ListItemText sx={{
                             pl: 2,
                             pr: 2,
-                            overflowWrap: "break-word",
                         }}
                         primary={product.name}
                         secondary={`$${formatCurrency(product.price)}`}/>
@@ -84,17 +83,21 @@ const FilledCart = ({cart, drawer}) => {
                         </div>
                     </ListItem>
                 ))}
-                <Divider/>
             </List>
-            <Box sx={{
-                display:"flex",
-                justifyContent: "space-between",
-            }}>
-                <Typography variant="subtitle1">Subtotal</Typography>
-                <Typography variant="subtitle1">${formatCurrency(cart.subtotal)}</Typography>
-            </Box>
-            <BlackButton variant="contained" fullWidth onClick={handleCheckout} text="Checkout"/>
-            <BlackButton variant="outlined" fullWidth onClick={() => dispatch(removeAllCartItems())} text="Empty Cart"/>
+            <Stack spacing={2}>
+                <Divider sx={{
+                    pt:2
+                }}/>
+                <Box sx={{
+                    display:"flex",
+                    justifyContent: "space-between",
+                }}>
+                    <Typography variant="h6">Subtotal</Typography>
+                    <Typography variant="h6">${formatCurrency(cart.subtotal)}</Typography>
+                </Box>
+                <BlackButton variant="contained" fullWidth onClick={handleCheckout} text="Checkout"/>
+                <BlackButton variant="outlined" fullWidth onClick={() => dispatch(removeAllCartItems())} text="Empty Cart"/>
+            </Stack>
         </Stack>
     )
 }
