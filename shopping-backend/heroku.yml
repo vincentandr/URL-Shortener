@@ -1,0 +1,19 @@
+setup:
+  addons:
+    - plan: cloudamqp:lemur
+    - plan: rediscloud:30
+build:
+  docker:
+    bff: 
+      dockerfile: build/bff/Dockerfile.bff
+      target: production
+    cart: 
+      dockerfile: build/cart/Dockerfile.cart
+      target: production
+    catalog: 
+      dockerfile: build/catalog/Dockerfile.catalog
+      target: production
+    payment: 
+      dockerfile: build/payment/Dockerfile.payment
+      target: production
+  
