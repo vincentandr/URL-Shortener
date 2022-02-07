@@ -5,15 +5,15 @@ setup:
 build:
   docker:
     bff: 
-      dockerfile: shopping-backend/build/bff/Dockerfile.bff
+      dockerfile: shopping-backend/Dockerfile.bff
       target: production
     cart: 
-      dockerfile: shopping-backend/build/cart/Dockerfile.cart
+      dockerfile: shopping-backend/Dockerfile.cart
       target: production
     catalog: 
-      dockerfile: shopping-backend/build/catalog/Dockerfile.catalog
+      dockerfile: shopping-backend/Dockerfile.catalog
       target: production
     payment: 
-      dockerfile: shopping-backend/build/payment/Dockerfile.payment
+      dockerfile: shopping-backend/Dockerfile.payment
       target: production
   
