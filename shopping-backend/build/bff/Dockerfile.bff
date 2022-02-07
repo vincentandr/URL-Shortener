@@ -11,14 +11,14 @@ COPY go.sum .
 # Cache the mod file, only redownload if it changes
 RUN go mod download
 
-COPY ./cmd/cart ./cmd/cart
+COPY ./cmd/bff ./cmd/bff
 COPY ./internal ./internal
 
 # CGO should be enabled if the codes use C library. GOOS is image OS
-RUN CGO_ENABLED=0 GOOS=linux go build -o build ./cmd/cart
+RUN CGO_ENABLED=0 GOOS=linux go build -o build ./cmd/bff
 
 # Use scratch for production / only executing binary file
-FROM scratch
+FROM scratch AS production
 
 WORKDIR /app
 
@@ -30,3 +30,4 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # If using cmd with executable file as its parameter, means cmd becomes executor of the file (no need entrypoint).
 # If using cmd without executable file as its parameter, must use entrypoint for the executor with executable file as entrypoint's parameter
 CMD ["./build"]
+
