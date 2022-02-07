@@ -1,6 +1,11 @@
 
 # shopping-microservice (In Progress)
 
+## Frontend UI
+
+https://github.com/vincentandr/shopping-frontend
+
+## Tech Stack Diagram
 ![Untitled Diagram](https://user-images.githubusercontent.com/42005057/147475016-bc2f7406-ed5d-4d1f-8471-b9ba47caef6b.png)
 
 ## Start via Docker commands
@@ -41,7 +46,8 @@ Call the APIs using API platform, e.g. Postman.
 ```
 /payment                    GET - Get all orders
 /payment/{userId}           GET - Get all orders by user ID
-/payment/{orderId}          PUT - Change order status to paid
+/payment/draft/{userId}     GET - Get the user's draft order. Beginning of checkout, and creating Stripe payment flow
+/payment/{orderId}          POST - Make payment
 ```
 
 ## Tests
