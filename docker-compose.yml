@@ -4,7 +4,7 @@ services:
   react-web:
     build:
       context: ./shopping-frontend
-      dockerfile: ./Dockerfile
+      dockerfile: ./Dockerfile.web
     ports:
       - 127.0.0.1:3000:3000
     env_file:
