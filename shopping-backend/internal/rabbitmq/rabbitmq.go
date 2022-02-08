@@ -15,13 +15,7 @@ type Rabbitmq struct {
 
 // NewRabbitMQ instantiates the RabbitMQ instances using configuration defined in environment variables.
 func NewRabbitMQ() (*Rabbitmq, error) {
-	username := os.Getenv("RABBITMQ_USERNAME")
-	password := os.Getenv("RABBITMQ_PASSWORD")
-	hostname := os.Getenv("RABBITMQ_HOST")
-	port := os.Getenv("RABBITMQ_PORT")
-
-	url := fmt.Sprintf("amqp://%s:%s@%s:%s/", username, password, hostname, port)
-	conn, err := amqp.Dial(url)
+	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	if err != nil {
 		return nil, fmt.Errorf("amqp.Dial %w", err)
 	}

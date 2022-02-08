@@ -4,7 +4,7 @@ setup:
     - plan: rediscloud:30
 build:
   docker:
-    web: shopping-frontend/Dockerfile.web
+    # web: shopping-frontend/Dockerfile.web
     bff: 
       dockerfile: shopping-backend/Dockerfile.bff
       target: production
@@ -17,4 +17,3 @@ build:
     payment: 
       dockerfile: shopping-backend/Dockerfile.payment
       target: production
-# testa

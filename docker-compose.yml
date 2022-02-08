@@ -14,7 +14,7 @@ services:
   bff-service:
     build: 
       context: ./shopping-backend
-      dockerfile: ./build/bff/Dockerfile.bff
+      dockerfile: ./Dockerfile.bff
     networks:
       - shopnetwork
     ports:
@@ -31,7 +31,7 @@ services:
   cart-service:
     build: 
       context: ./shopping-backend
-      dockerfile: ./build/cart/Dockerfile.cart
+      dockerfile: ./Dockerfile.cart
     networks:
       - shopnetwork
     expose:
@@ -47,7 +47,7 @@ services:
   catalog-service:
     build: 
       context: ./shopping-backend
-      dockerfile: ./build/catalog/Dockerfile.catalog
+      dockerfile: ./Dockerfile.catalog
     networks:
       - shopnetwork
     expose:
@@ -63,7 +63,7 @@ services:
   payment-service:
     build: 
       context: ./shopping-backend
-      dockerfile: ./build/payment/Dockerfile.payment
+      dockerfile: ./Dockerfile.payment
     networks:
       - shopnetwork
     expose:
