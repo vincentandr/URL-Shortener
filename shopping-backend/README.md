@@ -46,12 +46,12 @@ Call the APIs using API platform, e.g. Postman.
 ## Tests
 HTTP handlers test
 ```
-go test -v ./cmd/bff/internal/handler/...
+go test -v ./bff/internal/handler/...
 ```
 
 Cart helper functions test
 ```
-go test -v ./cmd/cart/
+go test -v ./cart/
 ```
 
 ## Miscellaneous

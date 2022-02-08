@@ -11,11 +11,11 @@ COPY go.sum .
 # Cache the mod file, only redownload if it changes
 RUN go mod download
 
-COPY ./cmd/catalog ./cmd/catalog
+COPY ./catalog ./catalog
 COPY ./internal ./internal
 
 # CGO should be enabled if the codes use C library. GOOS is image OS
-RUN CGO_ENABLED=0 GOOS=linux go build -o build ./cmd/catalog
+RUN CGO_ENABLED=0 GOOS=linux go build -o build ./catalog
 
 # Use scratch for production / only executing binary file
 FROM scratch AS production
