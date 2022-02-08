@@ -19,7 +19,6 @@ func NewDb(database int) *Redis {
     }
 
     opt.DB = database
-    opt.Password = os.Getenv("REDIS_DB_PASSWORD")
 
 	conn := redis.NewClient(opt)
 
