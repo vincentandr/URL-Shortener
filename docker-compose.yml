@@ -5,4 +5,6 @@ services:
     image: vincentandr26/catalog_service
     expose:
       - "50051"
+    env_file:
+      - .env
     restart: on-failure
