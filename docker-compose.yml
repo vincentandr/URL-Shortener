@@ -2,7 +2,7 @@ version: "2"
 
 services:
   catalog-service:
-    image: vincentandr26/catalog-service
+    image: vincentandr26/catalog_service
     expose:
       - "50051"
     restart: on-failure
