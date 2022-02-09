@@ -2,7 +2,7 @@ version: "2"
 
 services:
   catalog-service:
-    image: vincentandr26/shopping-microservice_catalog-service
+    image: vincentandr26/catalog-service
     expose:
       - "50051"
     restart: on-failure
