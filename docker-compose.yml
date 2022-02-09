@@ -3,12 +3,8 @@ version: "2"
 services:
   bff-service:
     image: vincentandr26/shopping-microservice_bff-service
-    networks:
-      - shopnetwork
     ports:
       - 127.0.0.1:5000:5000
     expose:
       - "5000"
-    env_file:
-      - ./shopping-backend/.env
     restart: on-failure
