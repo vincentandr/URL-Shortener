@@ -2,7 +2,7 @@ version: "2"
 
 services:
   bff-service:
-    image: vincentandr26/shopping-microservice_bff-service
+    image: vincentandr26/bff_service
     ports:
       - 127.0.0.1:5000:5000
     expose:
